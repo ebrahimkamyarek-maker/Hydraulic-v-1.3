@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<link rel="icon" href="icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<title>Universal Hydraulic - Product by Ebrahim Kamyar</title>
+<style>
+:root{--bg:#0b1220;--card:#121b2e;--card2:#18243b;--fg:#e8eefc;--mut:#8ea0c4;--acc:#ffb020;--acc2:#35c4ff;--ok:#2ecc71;--warn:#f5a623;--bad:#ff5a5f;--line:#243556}
+[data-theme=light]{--bg:#f2f5fb;--card:#fff;--card2:#eef2fa;--fg:#14203a;--mut:#5b6b8c;--acc:#d97706;--acc2:#0284c7;--line:#d5deee}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font-family:"Segoe UI",Roboto,Tahoma,sans-serif;font-size:14px;line-height:1.5}
+#by{background:#05080f;color:var(--acc);text-align:center;font-size:12px;letter-spacing:1px;padding:4px;font-weight:600}
+header{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:linear-gradient(90deg,#0f1c38,#16294d);color:#fff;border-bottom:2px solid var(--acc)}
+header b{font-size:18px;display:block}header small{opacity:.7;font-size:11px}
+button{background:var(--card2);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer;font-family:inherit;font-size:13px;margin:2px}
+button:hover,button.on{background:var(--acc);color:#111;border-color:var(--acc)}
+nav{display:flex;overflow-x:auto;gap:4px;padding:8px;background:var(--card);border-bottom:1px solid var(--line)}nav button{white-space:nowrap}#tabs{background:var(--card2)}
+main{padding:12px;max-width:1150px;margin:auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}.card h3{margin:0 0 8px;color:var(--acc);font-size:15px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+label{display:flex;flex-direction:column;font-size:12px;color:var(--mut)}label i{font-style:normal;color:var(--acc2)}
+input,select,textarea{background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:7px;font-size:14px;font-family:inherit;width:100%}
+input:focus,select:focus{outline:2px solid var(--acc2)}
+table.t{width:100%;border-collapse:collapse;font-size:13px}.t td,.t th{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left}
+.t th{background:var(--card2);color:var(--acc);font-weight:600}.t th.sec{color:var(--acc2)}
+.t td.v{font-weight:600;font-family:Consolas,monospace;text-align:right;user-select:text}.t td small,.t th small{font-weight:400}
+.fa{display:block;font-size:10px;color:var(--mut);direction:rtl;text-align:right;unicode-bidi:isolate;font-family:Tahoma,sans-serif}
+td .fa{display:inline-block;margin-left:8px}.sc{overflow-x:auto}
+.al{padding:8px 12px;border-radius:8px;margin:6px 0;border-left:4px solid}
+.al.ok{background:#12301f;border-color:var(--ok)}.al.warn{background:#3a2c0a;border-color:var(--warn)}.al.bad{background:#3b1418;border-color:var(--bad)}.al.info{background:#102a3d;border-color:var(--acc2)}
+[data-theme=light] .al.ok{background:#e3f7ea}[data-theme=light] .al.warn{background:#fff3d6}[data-theme=light] .al.bad{background:#ffe3e5}[data-theme=light] .al.info{background:#e1f2fb}
+canvas{width:100%;height:290px;background:var(--card);border:1px solid var(--line);border-radius:10px;margin:6px 0}
+.kpi{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}.kpi div{background:var(--card2);border-radius:10px;padding:10px;text-align:center}.kpi b{display:block;font-size:19px;color:var(--acc)}.kpi span{font-size:11px;color:var(--mut)}
+.bar{height:8px;background:var(--acc2);border-radius:4px;min-width:2px}.note{font-size:12px;color:var(--mut);margin:4px 0}.row{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
+.pass{color:var(--ok);font-weight:700}.fail{color:var(--bad);font-weight:700}.foot{text-align:center;color:var(--mut);font-size:11px;padding:16px}
+@media print{#by,header,nav,.row,button{display:none!important}body{background:#fff;color:#000}.card{border:1px solid #999}}
+</style>
+</head>
+<body>
+<div id="by">Product by Ebrahim Kamyar</div>
+<header><div><b>Universal Hydraulic</b><small id="sub"></small></div><div><button id="bU"></button><button id="bT">Theme</button></div></header>
+<nav id="mods"></nav><nav id="tabs"></nav>
+<main id="view"></main>
+<div class="foot">Calculations are estimates. Verify against the company's official software and the well program before any operational use.</div>
+<script>
+'use strict';
+const $=(s,r=document)=>r.querySelector(s);
+const KEY='uh_v2';
+let S={};try{S=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){S={}}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const lg=Math.log10,sum=(a,fn)=>a.reduce((x,y)=>x+fn(y),0);
+/* ---------- units (internal = Field) ---------- */
+const U={dia:['in','mm',25.4],len:['ft','m',0.3048],mw:['ppg','kg/L',0.119826],press:['psi','bar',0.0689476],flow:['gpm','L/min',3.78541],vol:['bbl','m³',0.158987],pg:['psi/ft','bar/m',0.226206],cap:['bbl/ft','m³/m',0.5216],capi:['ft/bbl','m/m³',1.91713],vel:['ft/min','m/min',0.3048],vels:['ft/s','m/s',0.3048],rop:['ft/h','m/h',0.3048],force:['lbf','kN',0.00444822],wob:['klbf','kN',4.44822],trq:['kft·lbf','kN·m',1.35582],mass:['lb','kg',0.453592]};
+const metric=()=>S._u==='M';
+const toD=(k,v)=>(v==null||!isFinite(v))?NaN:((k&&U[k]&&metric())?v*U[k][2]:v);
+const toF=(k,v)=>(k&&U[k]&&metric())?v/U[k][2]:v;
+const ul=k=>k&&U[k]?U[k][metric()?1:0]:'';
+const n2=(v,d=2)=>Number.isFinite(v)?(+v.toFixed(d)).toLocaleString('en-US',{maximumFractionDigits:d}):'—';
+const fv=(v,k,d=2)=>{const x=toD(k,v);return isFinite(x)?n2(x,d)+(ul(k)?' <small>'+ul(k)+'</small>':''):'—'};
+const pc=v=>isFinite(v)?n2(v,1)+' %':'—';
+/* ---------- input definitions: [label, kind, flag] flag: o=optional(blank=0), sel, txt ---------- */
+const IN={
+wellName:['Well Name','','txt'],rigName:['Rig Name','','txt'],
+holeD:['Hole / Bit Diameter','dia'],wash:['Washout % (optional)','','o'],md:['Measured Depth MD (bit depth)','len'],tvd:['True Vertical Depth TVD','len'],csgID:['Last Casing ID','dia'],shoe:['Casing Shoe Depth (MD)','len'],riserL:['Riser/Conductor Length (optional)','len','o'],riserID:['Riser/Conductor ID','dia'],
+dpOD:['Drill Pipe OD','dia'],dpID:['Drill Pipe ID','dia'],hwOD:['HWDP OD','dia'],hwID:['HWDP ID','dia'],hwL:['HWDP Length (optional)','len','o'],dcOD:['Drill Collar OD','dia'],dcID:['Drill Collar ID','dia'],dcL:['Drill Collar Length (optional)','len','o'],
+ptype:['Pump Type','','sel'],liner:['Liner Diameter','dia'],stroke:['Stroke Length','dia'],rod:['Rod Diameter (Duplex)','dia'],eff:['Pump Efficiency %',''],spm:['Pump Speed SPM',''],qOver:['Manual Flow Rate (overrides pump)','flow'],maxSPP:['Max Allowable Pump Pressure','press'],pumpHP:['Pump Input Power hp',''],surf:['Surface Equipment (API case)','','sel'],spMeas:['Measured SPP','press'],
+mw:['Mud Weight','mw'],r600:['Fann θ600',''],r300:['Fann θ300',''],r100:['Fann θ100',''],r6:['Fann θ6',''],r3:['Fann θ3',''],pitV:['Active Surface Volume','vol'],
+nozz:['Nozzles in 32nds, comma separated','','txt'],pore:['Pore Pressure (equiv. MW)','mw'],frac:['Fracture Pressure at Shoe (equiv. MW)','mw'],rop:['ROP','rop'],wob:['WOB','wob'],rpm:['Rotary Speed RPM',''],trq:['Torque','trq'],
+cutD:['Cuttings Diameter','dia'],cutRho:['Cuttings Density','mw'],poro:['Formation Porosity %',''],avMin:['Minimum Acceptable AV','vel'],avDes:['Desired AV','vel'],qTarget:['Target Flow Rate','flow'],incl:['Hole Inclination ° (optional)','','o'],V1:['Hopkins Chart Slip Velocity V1','vel'],V2:['Critical Transport Velocity V2','vel'],lagExtra:['Extra Delay: sample line + gas trap, min (optional)','','o'],
+standL:['Stand Length','len'],standT:['Time per Stand, seconds',''],tmg:['Surge/Swab Safety Margin','mw'],nStands:['Stands Pulled',''],avgStd:['Average Stand Length','len'],ob:['Overbalance','press'],
+sidpp:['SIDPP','press'],sicp:['SICP','press'],gain:['Pit Gain','vol'],scrP:['SCR Pressure','press'],scrSpm:['SCR Speed SPM',''],kMargin:['KMW Safety Margin (optional)','mw','o'],pMargin:['ICP Safety Margin (optional)','press','o'],bSG:['Weighting Material SG',''],
+vMargin:['Overbalance Margin','press'],vRange:['Operating Range','press'],lub1:['Lubricate P1 (before pumping)','press'],lub2:['Lubricate P2 (after pumping)','press'],buD:['Formation Depth TVD','len'],buFr:['Fracture Pressure (equiv. MW)','mw'],buCap:['Tubing/Pipe Capacity','cap'],buBurst:['Burst Pressure','press'],buSIT:['Shut-in Tubing Pressure','press'],buGG:['Gas Gradient','pg'],buFl:['Bullhead Fluid Weight','mw'],migDP:['SICP Increase','press'],migT:['Over Time, hours',''],
+wuW1:['Initial Weight','mw'],wuW2:['Final Weight','mw'],wuV:['Initial Volume','vol'],wuVf:['Specified Final Volume','vol'],
+dlW1:['Initial Weight','mw'],dlW2:['Target Weight','mw'],dlV1:['Initial Volume','vol'],dlVf:['Specified Final Volume','vol'],dlWw:['Water Weight','mw'],dlWd:['Diesel Weight','mw'],
+mxV1:['Mud 1 Volume','vol'],mxD1:['Mud 1 Weight','mw'],mxV2:['Mud 2 Volume','vol'],mxD2:['Mud 2 Weight','mw'],mxVt:['Target Volume','vol'],mxDt:['Target Weight','mw'],
+slW:['Mud Weight','mw'],slDry:['Desired Dry Pipe Length','len'],slWt:['Slug Weight','mw'],slVol:['Slug Volume (for weight calc)','vol'],
+tkType:['Tank Type','','sel'],tkL:['Length','len'],tkW:['Width','len'],tkH:['Tank Height','len'],tkM:['Fluid Height','len'],tkD:['Cylinder Diameter','len'],
+dxN:['Normal Pressure Equivalent MW','mw'],obg:['Overburden Gradient','pg'],nu:['Poisson Ratio ν',''],dxThr:['Alert Threshold dxc/Trend (fraction)',''],
+gC1:['C1 ppm',''],gC2:['C2 ppm',''],gC3:['C3 ppm',''],gC4:['C4 ppm',''],gC5:['C5 ppm',''],gUnit:['ppm per Gas Unit (calibration)',''],gPct:['Gas Reading %',''],gUin:['Gas Reading Units','']};
+const SEL={ptype:[['tri','Triplex'],['dup','Duplex']],surf:[['1','Case 1 (2600 ft equiv.)'],['2','Case 2 (946 ft)'],['3','Case 3 (610 ft)'],['4','Case 4 (424 ft)']],tkType:[['rect','Rectangular'],['vcyl','Vertical cylinder'],['hcyl','Horizontal cylinder']]};
+if(!S._u)S._u='F';if(!S._th)S._th='dark';if(!S.sc)S.sc=[];if(!S.dx)S.dx=[];if(!S.tpl)S.tpl={};
+const P={};
+function rebuild(){for(const k in IN){const fl=IN[k][2];if(fl==='sel'||fl==='txt')P[k]=S[k]||'';else{const v=S[k];P[k]=(v==null||!isFinite(v))?(fl==='o'?0:NaN):v}}}
+const miss=ks=>ks.filter(k=>{const fl=IN[k][2];return(fl==='sel'||fl==='txt')?!P[k]:!isFinite(P[k])});
+/* ---------- render helpers ---------- */
+const FA=s=>s?`<small class="fa">${s}</small>`:'';
+const T2=s=>{const a=s.split('|');return a[0]+FA(a[1])};
+function fld(k){const[l,kd,fl]=IN[k];
+ if(fl==='sel')return `<label>${l}<select data-k="${k}"><option value=""></option>${SEL[k].map(([v,t])=>`<option value="${v}" ${S[k]===v?'selected':''}>${t}</option>`).join('')}</select></label>`;
+ if(fl==='txt')return `<label>${l}<input data-k="${k}" value="${S[k]||''}"></label>`;
+ const u=ul(kd);const v=S[k]==null?'':+toD(kd,S[k]).toPrecision(7);
+ return `<label>${l}${u?` <i>(${u})</i>`:''}<input type="number" inputmode="decimal" step="any" data-k="${k}" value="${v}"></label>`}
+const grp=(t,ks)=>`<div class="card"><h3>${t}</h3><div class="grid">${ks.map(fld).join('')}</div></div>`;
+function tb(rows){let h='<table class="t">';for(const r of rows){if(r[0]==='#'){h+=`<tr><th colspan="2" class="sec">${r[1]}${FA(r[2])}</th></tr>`;continue}
+ const v=typeof r[2]==='string'?r[2]:fv(r[2],r[3],r[4]===undefined?2:r[4]);h+=`<tr><td>${r[0]}${FA(r[1])}</td><td class="v">${v}</td></tr>`}return h+'</table>'}
+const gd=(head,rows)=>'<div class="sc"><table class="t"><tr>'+head.map(x=>`<th>${T2(x)}</th>`).join('')+'</tr>'+rows.map(r=>'<tr>'+r.map(c=>`<td class="v">${c}</td>`).join('')+'</tr>').join('')+'</table></div>';
+const al=(l,m)=>`<div class="al ${l}">${m}</div>`;
+const cd=(t,b)=>`<div class="card"><h3>${T2(t)}</h3>${b}</div>`;
+const kpi=a=>'<div class="kpi">'+a.map(([l,v])=>`<div><b>${v}</b><span>${l}</span></div>`).join('')+'</div>';
+/* ---------- core calculations ---------- */
+const C24=24.5/60,capI=d=>d*d/1029.4,capA=(D,d)=>(D*D-d*d)/1029.4;
+const E4={'1':2.5e-4,'2':9.6e-5,'3':5.3e-5,'4':4.2e-5};
+const po100=()=>P.ptype==='tri'?0.000243*P.liner**2*P.stroke:P.ptype==='dup'?0.000162*P.stroke*(2*P.liner**2-P.rod**2):NaN;
+const po=()=>po100()*P.eff/100;
+const Qf=()=>P.qOver>0?P.qOver:po()*P.spm*42;
+const tvdOf=z=>z*P.tvd/P.md;
+const GEO=['md','tvd','holeD','csgID','shoe','dpOD','dpID'];
+const PUMPK=()=>['ptype','liner','stroke','eff','spm',...(P.ptype==='dup'?['rod']:[])];
+const QK=()=>P.qOver>0?[]:PUMPK();
+const HY=()=>[...GEO,...QK(),'mw','r600','r300','r100','r3'];
+function validate(){const e=[],c=(x,m)=>{if(x)e.push(m)};
+ c(P.tvd>P.md,'TVD cannot exceed MD.');c(P.shoe>P.md,'Casing shoe is deeper than MD.');c(P.dpOD>=P.holeD,'Drill pipe OD must be smaller than the hole diameter.');c(P.dpID>=P.dpOD,'Drill pipe ID must be smaller than its OD.');c(P.csgID<=P.dpOD,'Casing ID must be larger than drill pipe OD.');
+ c(P.dcL+P.hwL>P.md,'HWDP + DC length exceeds MD.');c(P.dcL>0&&(P.dcOD>=P.holeD||P.dcID>=P.dcOD),'Check drill collar OD/ID against the hole diameter.');c(P.hwL>0&&(P.hwOD>=P.holeD||P.hwID>=P.hwOD),'Check HWDP OD/ID.');
+ c(P.riserL>0&&!(P.riserID>P.dpOD),'Riser/Conductor ID must be larger than drill pipe OD.');c(P.ptype==='dup'&&P.rod>=P.liner,'Rod diameter must be smaller than the liner.');c(P.r300>=P.r600,'θ600 must be larger than θ300.');return e}
+function geo(){const md=P.md,dc=Math.min(P.dcL,md),hw=Math.min(P.hwL,md-dc),dp=md-dc-hw;
+ const str=[{n:'DP',od:P.dpOD,id:P.dpID,a:0,b:dp},{n:'HWDP',od:P.hwOD,id:P.hwID,a:dp,b:dp+hw},{n:'DC',od:P.dcOD,id:P.dcID,a:dp+hw,b:md}].filter(s=>s.b-s.a>0.01);
+ const rl=Math.min(P.riserL,md),shoe=Math.min(P.shoe,md);
+ let bp=[0,rl,shoe,...str.map(s=>s.a),md].filter(x=>x>=0&&x<=md);bp=[...new Set(bp.map(x=>+x.toFixed(3)))].sort((a,b)=>a-b);
+ const ann=[];for(let i=0;i<bp.length-1;i++){const a=bp[i],b=bp[i+1];if(b-a<0.01)continue;const m=(a+b)/2,s=str.find(s=>m>=s.a&&m<=s.b)||str[str.length-1];let D,z;
+  if(m<rl){D=P.riserID;z='Riser'}else if(m<shoe){D=P.csgID;z='CSG'}else{D=P.holeD*(1+P.wash/100);z='OH'}ann.push({a,b,L:b-a,D,od:s.od,sn:s.n,z})}
+ return{str,ann,shoe,md}}
+function rheo(){const a=P,PV=a.r600-a.r300,YP=a.r300-PV,n=3.32*lg(a.r600/a.r300),K=510*a.r300/Math.pow(511,n),na=0.657*lg(a.r100/a.r3),Ka=510*a.r100/Math.pow(170.2,na),t0=2*a.r3-a.r6,nh=3.32*lg((a.r600-t0)/(a.r300-t0)),kh=(a.r300-t0)/Math.pow(511,nh);
+ return{PV,YP,AVc:a.r600/2,n,K,na,Ka,t0,nh,kh,Kt:a.r300/Math.pow(511,n)}}
+function fric(Re,n){const L=3470-1370*n,Tt=4270-1370*n,a=(lg(n)+3.93)/50,b=(1.75-lg(n))/7,fT=r=>a/Math.pow(r,b);
+ if(Re<=L)return{f:16/Re,reg:'Laminar'};if(Re>=Tt)return{f:fT(Re),reg:'Turbulent'};const f1=16/L,f2=fT(Tt);return{f:f1+(Re-L)*(f2-f1)/(Tt-L),reg:'Transitional'}}
+function hyd(Q){const G=geo(),r=rheo(),rho=P.mw,PVs=Math.max(r.PV,0.5);
+ const sur=E4[P.surf]*rho**0.8*Q**1.8*PVs**0.2;
+ const pipe=G.str.map(s=>{const L=s.b-s.a,v=C24*Q/(s.id*s.id),mu=r.K*Math.pow(96*v/s.id,r.n-1)*Math.pow((3*r.n+1)/(4*r.n),r.n),Re=928*rho*v*s.id/mu,{f:ff,reg}=fric(Re,r.n);
+  const dP=ff*rho*v*v*L/(25.81*s.id),V=v*60,Vc=(97*r.PV+97*Math.sqrt(r.PV**2+8.2*rho*s.id**2*r.YP))/(rho*s.id);
+  const dB=V>Vc?rho**0.75*v**1.75*PVs**0.25*L/(1800*s.id**1.25):(r.PV*V/(90000*s.id**2)+r.YP/(225*s.id))*L;return{...s,L,v,mu,Re,reg,dP,dB,Vc}});
+ const ann=G.ann.map(s=>{const gap=s.D-s.od,A=s.D*s.D-s.od*s.od,v=C24*Q/A,mu=r.Ka*Math.pow(144*v/gap,r.na-1)*Math.pow((2*r.na+1)/(3*r.na),r.na),Re=757*rho*v*gap/mu,{f:ff,reg}=fric(Re,r.na);
+  const dP=ff*rho*v*v*s.L/(21.1*gap),V=v*60,Vc=(97*r.PV+97*Math.sqrt(r.PV**2+6.2*rho*gap*gap*r.YP))/(rho*gap);
+  const dB=V>Vc?rho**0.75*v**1.75*PVs**0.25*s.L/(1396*gap**1.25):(r.PV*V/(60000*gap*gap)+r.YP/(200*gap))*s.L;return{...s,gap,A,v,V,mu,Re,reg,dP,dB,Vc}});
+ const nz=String(P.nozz).split(/[\s,;]+/).map(parseFloat).filter(x=>x>0),tfa=nz.length?nz.reduce((a,n)=>a+Math.PI/4*(n/32)**2,0):NaN;
+ const dPb=rho*Q*Q/(10858*tfa*tfa),sPipe=sum(pipe,s=>s.dP),sAnn=sum(ann,s=>s.dP),SPP=sur+sPipe+dPb+sAnn;
+ const jet=0.32086*Q/tfa,hhpb=dPb*Q/1714,hsi=hhpb/(Math.PI/4*P.holeD**2),IF=0.01732*Q*Math.sqrt(rho*dPb);
+ return{G,r,Q,sur,pipe,ann,nz,tfa,dPb,sPipe,sAnn,SPP,jet,hhpb,hsi,IF,sAnnB:sum(ann,s=>s.dB),sPipeB:sum(pipe,s=>s.dB)}}
+const slip1=(PV,MW,dp,rp)=>{const x=PV/(MW*dp);return 0.45*x*(Math.sqrt(36800/(x*x)*dp*(rp/MW-1)+1)-1)};
+const slip2=(t600,t300,MW,D,d,Q,dp,rp)=>{const n=3.32*lg(t600/t300),K=t300/Math.pow(511,n),v=24.5*Q/(D*D-d*d),gap=D-d,mu=Math.pow(2.4*v/gap*(2*n+1)/(3*n),n)*(200*K*gap/v);return 175*dp*Math.pow(rp-MW,0.667)/(Math.pow(MW,0.333)*Math.pow(mu,0.333))};
+function clean(h){const r=h.r,rho=P.mw;return h.ann.map(s=>{const AV=24.5*h.Q/s.A,v1=slip1(r.PV,rho,P.cutD,P.cutRho),v2=slip2(P.r600,P.r300,rho,s.D,s.od,h.Q,P.cutD,P.cutRho);return{...s,AV,v1,v2,net1:AV-v1,Tr:1-v1/AV,CCI:AV*rho*r.K/400000,Tr2:1-v2/AV}})}
+function avMinSeg(cl){const oh=cl.filter(s=>s.z==='OH'),a=oh.length?oh:cl;return a.reduce((m,s)=>!m||s.AV<m.AV?s:m,null)}
+function ecdCalc(h,cl){const rho=P.mw,tvd=P.tvd,bot=rho+h.sAnn/(0.052*tvd),sh=rho+sum(h.ann.filter(s=>s.b<=h.G.shoe+0.01),s=>s.dP)/(0.052*tvdOf(h.G.shoe));
+ const c0=(1-P.poro/100)*P.holeD**2*P.rop/(1471*h.Q),b=cl[cl.length-1],Tr=b?b.Tr:NaN,C=Tr>0.05?Math.min(c0/Tr,0.5):0.5;
+ return{bot,sh,c0,C,cut:bot+(P.cutRho-rho)*C,bhpS:0.052*rho*tvd,bhpC:0.052*bot*tvd}}
+function alertsOf(h,cl,e){const a=[],rho=P.mw;
+ if(rho<P.pore)a.push(al('bad','Mud weight is below pore pressure: underbalanced.'));
+ if(e.bot>=P.frac-0.2)a.push(al('bad','Bottom-hole ECD is at or near the fracture pressure.'));else if(e.bot>=P.frac-0.5)a.push(al('warn','Bottom-hole ECD is within 0.5 ppg of the fracture pressure.'));
+ if(e.sh>=P.frac-0.2)a.push(al('bad','Shoe ECD is at or near the fracture pressure.'));
+ if(h.SPP>P.maxSPP)a.push(al('bad','Calculated SPP exceeds the maximum pump pressure.'));
+ if(h.SPP*h.Q/1714/0.9>P.pumpHP)a.push(al('bad','Required pump power exceeds the pump hp entered.'));
+ h.ann.filter(s=>s.z==='OH'&&s.reg==='Turbulent').forEach(s=>a.push(al('warn','Turbulent flow in open hole ('+s.sn+'): risk of hole erosion.')));
+ if(h.hsi<1||h.hsi>8)a.push(al('warn','HSI is '+n2(h.hsi,2)+'; typical range is about 1 to 8.'));
+ if(h.jet<250||h.jet>450)a.push(al('warn','Nozzle jet velocity is outside the 250–450 ft/s guideline.'));
+ const w=avMinSeg(cl);if(w&&w.AV<P.avMin)a.push(al('warn','Annular velocity in '+w.sn+'/'+w.z+' is below the minimum acceptable AV.'));
+ const c=cl[cl.length-1];if(c){if(c.CCI<0.5)a.push(al('bad','CCI below 0.5: poor hole cleaning.'));else if(c.CCI<1)a.push(al('warn','CCI between 0.5 and 1: fair hole cleaning.'))}
+ if(e.C>0.05)a.push(al('warn','Estimated cuttings concentration is above 5 %.'));
+ if(P.spMeas>0&&Math.abs(h.SPP-P.spMeas)/P.spMeas>0.15)a.push(al('info','Calculated SPP differs from measured SPP by more than 15 %. Review nozzles, BHA and rheology.'));
+ return a.length?a.join(''):al('ok','No alerts for the current inputs.')}
+function keyRes(){if(miss([...HY(),'nozz','surf','poro','rop']).length||validate().length)return null;const Q=Qf(),h=hyd(Q),cl=clean(h),e=ecdCalc(h,cl),c=cl[cl.length-1]||{};return{Q,SPP:h.SPP,ECD:e.bot,HHP:h.hhpb,HSI:h.hsi,CCI:c.CCI,TFA:h.tfa,h,cl,e}}
+/* ---------- charts ---------- */
+function nice(a,b,n=5){const s=(b-a)/n||1,p=Math.pow(10,Math.floor(lg(s))),m=s/p,st=(m<1.5?1:m<3?2:m<7?5:10)*p,o=[];for(let v=Math.ceil(a/st)*st;v<=b+st*1e-6;v+=st)o.push(+v.toPrecision(10));return o}
+function plot(id,o){const c=document.getElementById(id);if(!c)return;const dpr=window.devicePixelRatio||1,W=c.clientWidth||600,H=c.clientHeight||290;c.width=W*dpr;c.height=H*dpr;
+ const g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);const st=getComputedStyle(document.documentElement),fg=st.getPropertyValue('--fg'),mut=st.getPropertyValue('--mut'),ln=st.getPropertyValue('--line');
+ const M={l:56,r:14,t:18,b:42},tx=v=>o.xlog?lg(v):v,ty=v=>o.ylog?lg(v):v,okp=p=>isFinite(p[0])&&isFinite(p[1])&&(!o.xlog||p[0]>0)&&(!o.ylog||p[1]>0);
+ const pts=o.series.flatMap(s=>s.pts).filter(okp);g.font='11px Segoe UI,Tahoma';if(!pts.length){g.fillStyle=mut;g.fillText('No data to plot',20,30);return}
+ let x0=Math.min(...pts.map(p=>tx(p[0]))),x1=Math.max(...pts.map(p=>tx(p[0]))),y0=Math.min(...pts.map(p=>ty(p[1]))),y1=Math.max(...pts.map(p=>ty(p[1])));
+ if(x1-x0<1e-9){x0-=1;x1+=1}if(y1-y0<1e-9){y0-=1;y1+=1}const px=(x1-x0)*0.05,py=(y1-y0)*0.05;x0-=px;x1+=px;y0-=py;y1+=py;
+ const X=v=>M.l+(tx(v)-x0)/(x1-x0)*(W-M.l-M.r),Y=v=>o.yrev?M.t+(ty(v)-y0)/(y1-y0)*(H-M.t-M.b):H-M.b-(ty(v)-y0)/(y1-y0)*(H-M.t-M.b);
+ const tk=(lo,hi,log)=>{if(!log)return nice(lo,hi);const r=[];for(let k=Math.floor(lo);k<=Math.ceil(hi);k++)[1,2,5].forEach(m=>{const v=m*Math.pow(10,k);if(lg(v)>=lo&&lg(v)<=hi)r.push(v)});return r};
+ g.lineWidth=1;g.strokeStyle=ln;g.fillStyle=mut;g.textAlign='center';
+ tk(x0,x1,o.xlog).forEach(v=>{const x=X(v);g.beginPath();g.moveTo(x,M.t);g.lineTo(x,H-M.b);g.stroke();g.fillText(n2(v,v<10?2:0),x,H-M.b+14)});
+ g.textAlign='right';tk(y0,y1,o.ylog).forEach(v=>{const y=Y(v);g.beginPath();g.moveTo(M.l,y);g.lineTo(W-M.r,y);g.stroke();g.fillText(n2(v,v<10?2:0),M.l-4,y+3)});
+ g.fillStyle=fg;g.textAlign='center';g.fillText(o.xl||'',W/2,H-6);g.save();g.translate(12,H/2);g.rotate(-Math.PI/2);g.fillText(o.yl||'',0,0);g.restore();
+ const cols=['#ffb020','#35c4ff','#2ecc71','#ff5a5f','#c792ea','#f78c6c'];
+ o.series.forEach((s,i)=>{const col=s.c||cols[i%cols.length],p=s.pts.filter(okp);g.strokeStyle=col;g.fillStyle=col;g.lineWidth=2;g.setLineDash(s.dash?[6,4]:[]);
+  if(!s.dots){g.beginPath();p.forEach((q,j)=>j?g.lineTo(X(q[0]),Y(q[1])):g.moveTo(X(q[0]),Y(q[1])));g.stroke()}
+  g.setLineDash([]);if(s.dots||s.mk)p.forEach(q=>{g.beginPath();g.arc(X(q[0]),Y(q[1]),3,0,7);g.fill()});
+  g.textAlign='left';g.fillRect(M.l+6,M.t+4+i*14,10,3);g.fillText(s.n,M.l+20,M.t+9+i*14)})}
+let _chart=[];const charts=list=>list.forEach(([id,o])=>requestAnimationFrame(()=>plot(id,o)));
+/* ---------- hydraulics outputs ---------- */
+function tVol(){const G=geo(),sv=sum(G.str,s=>capI(s.id)*(s.b-s.a)),av=sum(G.ann,s=>capA(s.D,s.od)*s.L),hv=sum(G.ann,s=>capI(s.D)*s.L),dispT=sum(G.str,s=>(s.od**2-s.id**2)/1029.4*(s.b-s.a));
+ return cd('Drill String Capacity & Displacement|ظرفیت و جابجایی رشته',gd(['Section|بخش','OD|قطر خارجی','ID|قطر داخلی','Length|طول','Capacity|ظرفیت','ft/bbl|فوت بر بشکه','Internal Vol|حجم داخلی','Displacement|جابجایی','Disp. Vol|حجم جابجایی'],G.str.map(s=>[s.n,fv(s.od,'dia',3),fv(s.id,'dia',3),fv(s.b-s.a,'len',1),fv(capI(s.id),'cap',5),fv(1/capI(s.id),'capi',2),fv(capI(s.id)*(s.b-s.a),'vol',2),fv((s.od**2-s.id**2)/1029.4,'cap',5),fv((s.od**2-s.id**2)/1029.4*(s.b-s.a),'vol',2)])))+
+ cd('Annulus by Section|حجم فضای حلقوی به تفکیک',gd(['Zone|ناحیه','Pipe|لوله','Outer ID|قطر بیرونی','Pipe OD|قطر لوله','Length|طول','Capacity|ظرفیت','ft/bbl|فوت بر بشکه','Volume|حجم'],G.ann.map(s=>[s.z,s.sn,fv(s.D,'dia',3),fv(s.od,'dia',3),fv(s.L,'len',1),fv(capA(s.D,s.od),'cap',5),fv(1/capA(s.D,s.od),'capi',2),fv(capA(s.D,s.od)*s.L,'vol',2)])))+
+ cd('Totals|مجموع‌ها',tb([['String Internal Volume','حجم داخل رشته',sv,'vol',2],['Annulus Volume','حجم فضای حلقوی',av,'vol',2],['Hole Volume (string + annulus)','حجم چاه',sv+av,'vol',2],['Hole Volume without String','حجم چاه بدون رشته',hv,'vol',2],['String Steel Displacement','جابجایی فولاد رشته',dispT,'vol',2],['Mud System Volume (hole + active)','حجم سیستم گل',sv+av+P.pitV,'vol',2],
+  ['#','Cuttings & Pump','کنده و پمپ'],['Cuttings Volume per ft Drilled','حجم کنده به ازای هر فوت',P.holeD**2*(1-P.poro/100)/1029.4,'cap',5],['Cuttings Generation Rate','نرخ تولید کنده',P.holeD**2*(1-P.poro/100)/1029.4*P.rop,'vol',3],['Pump Output at 100 %','خروجی پمپ در ۱۰۰٪',po100(),'vol',5]]))}
+const gok=()=>!miss([...GEO,'mw','r600','r300','r100','r3']).length&&!validate().length;
+function tPump(){const ok=gok()&&!miss(QK()).length,h=ok?hyd(Qf()):null,cl=h?clean(h):null,w=cl?avMinSeg(cl):null,out=po(),Q=Qf();
+ const Qreq=w?P.avDes*w.A/24.5:NaN,hp=h?h.SPP*Q/1714:NaN;
+ return cd('Pump Output|خروجی پمپ',tb([['Pump Type','نوع پمپ',P.ptype==='tri'?'Triplex':'Duplex'],['Output at 100 %','خروجی در ۱۰۰٪',po100(),'vol',5],['Output at Entered Efficiency','خروجی با راندمان وارد‌شده',out,'vol',5],['Flow Rate','دبی',Q,'flow',1],['Flow Rate (bbl/min)','دبی بشکه بر دقیقه',n2(Q/42,3)+' bbl/min']]))+
+ cd('Required Flow & SPM|دبی و SPM لازم',tb([['Critical Annulus Section','بحرانی‌ترین بخش حلقوی',w?w.sn+' / '+w.z:'—'],['Flow Required for Desired AV','دبی لازم برای AV دلخواه',Qreq,'flow',1],['SPM for Desired AV','SPM برای AV دلخواه',n2(Qreq/42/out,1)],['SPM for Target Flow','SPM برای دبی هدف',n2(P.qTarget/42/out,1)]]))+
+ cd('Pump Power|توان پمپ',tb([['Calculated SPP','فشار پمپ محاسبه‌شده',h?h.SPP:NaN,'press',0],['Hydraulic Power','توان هیدرولیکی',n2(hp,1)+' hp'],['Required Input Power (90 % eff.)','توان ورودی لازم',n2(hp/0.9,1)+' hp'],['Max Flow at Max Pressure & Pump hp','حداکثر دبی مجاز',1714*P.pumpHP*0.9/P.maxSPP,'flow',0]]))}
+function tVel(){const h=hyd(Qf());
+ return cd('Annular Velocity|سرعت فضای حلقوی',gd(['Zone|ناحیه','Pipe|لوله','AV|سرعت حلقوی','AV (ft/s)|فوت بر ثانیه','Critical Vel. (Bingham)|سرعت بحرانی','Regime|رژیم'],h.ann.map(s=>[s.z,s.sn,fv(s.V,'vel',1),fv(s.v,'vels',2),fv(s.Vc,'vel',0),isFinite(s.Vc)?(s.V>s.Vc?'Turbulent':'Laminar'):'—'])))+
+ cd('Velocity Inside String|سرعت داخل رشته',gd(['Section|بخش','Velocity|سرعت','ft/s|فوت بر ثانیه','Critical Vel.|سرعت بحرانی'],h.pipe.map(s=>[s.n,fv(s.v*60,'vel',1),fv(s.v,'vels',2),fv(s.Vc,'vel',0)])))+
+ cd('Nozzles|نازل‌ها',tb([['Nozzles (32nds)','نازل‌ها',h.nz.length?h.nz.join(' - '):'—'],['TFA','سطح کل جریان',isFinite(h.tfa)?n2(h.tfa,4)+' in²':'—'],['Jet Velocity','سرعت جت',h.jet,'vels',1]]))}
+function tRheo(){const r=rheo(),ok=gok()&&!miss(QK()).length,h=ok?hyd(Qf()):null;
+ return cd('Rheology Parameters|پارامترهای رئولوژی',tb([['#','Bingham Plastic','مدل بینگهام'],['PV (θ600 − θ300)','ویسکوزیته پلاستیک',n2(r.PV,1)+' cP'],['YP (θ300 − PV)','نقطه تسلیم',n2(r.YP,1)+' lb/100ft²'],['Apparent Viscosity (θ600/2)','ویسکوزیته ظاهری',n2(r.AVc,1)+' cP'],['LSYP (2θ3 − θ6)','نقطه تسلیم سرعت پایین',n2(r.t0,1)+' lb/100ft²'],
+  ['#','Power Law (600/300) – pipe','قانون توان برای لوله'],['n','شاخص رفتار جریان',n2(r.n,4)],['K (eq. cP)','ضریب قوام',n2(r.K,1)],
+  ['#','Power Law API RP 13D (100/3) – annulus','قانون توان برای حلقوی'],['n annulus','n حلقوی',n2(r.na,4)],['K annulus (eq. cP)','K حلقوی',n2(r.Ka,1)],
+  ['#','Herschel-Bulkley (parameters only)','هرشل-بالکلی فقط پارامترها'],['τ0','تنش تسلیم',n2(r.t0,2)],['n','n',n2(r.nh,4)],['K','K',n2(r.kh,4)]]))+
+ cd('Model Comparison (pipe + annulus friction)|مقایسه مدل‌ها',tb([['Power Law (API)','قانون توان',h?h.sPipe+h.sAnn:NaN,'press',0],['Bingham Plastic','بینگهام',h?h.sPipeB+h.sAnnB:NaN,'press',0],['Difference','اختلاف',h?(h.sPipeB+h.sAnnB)-(h.sPipe+h.sAnn):NaN,'press',0]])+'<p class="note">Herschel-Bulkley: parameters only; its pressure loss is not calculated in this version.</p>')}
+function tPress(){const h=hyd(Qf()),tot=h.SPP,row=(n,v)=>[n,fv(v,'press',1),pc(v/tot*100),isFinite(v/tot)?`<div class="bar" style="width:${Math.min(100,v/tot*100)}%"></div>`:'—'];
+ const rows=[row('Surface Equipment',h.sur),...h.pipe.map(s=>row('Inside '+s.n,s.dP)),row('Bit',h.dPb),...h.ann.map(s=>row('Annulus '+s.sn+'/'+s.z,s.dP))];
+ return cd('Pressure Loss Distribution (Power Law API)|توزیع افت فشار',gd(['Section|بخش','Pressure Loss|افت فشار','Share|سهم','Bar|نمودار'],rows)+tb([['Calculated SPP','فشار پمپ محاسبه‌شده',h.SPP,'press',0],['Measured SPP','فشار اندازه‌گیری‌شده',P.spMeas,'press',0],['Difference','اختلاف',h.SPP-P.spMeas,'press',0],['Parasitic Loss (without bit)','افت فشار بدون بیت',h.SPP-h.dPb,'press',0],['Bit Share of SPP','سهم بیت از SPP',pc(h.dPb/h.SPP*100)]]))+
+ cd('Reynolds Number, Flow Regime & Critical Velocity|رینولدز و رژیم جریان',gd(['Section|بخش','Re|عدد رینولدز','Regime|رژیم','Eff. Viscosity cP|ویسکوزیته مؤثر','V ft/min|سرعت','Critical V|سرعت بحرانی'],[...h.pipe.map(s=>['Inside '+s.n,n2(s.Re,0),s.reg,n2(s.mu,1),n2(s.v*60,0),n2(s.Vc,0)]),...h.ann.map(s=>['Annulus '+s.sn+'/'+s.z,n2(s.Re,0),s.reg,n2(s.mu,1),n2(s.V,0),n2(s.Vc,0)])])+'<p class="note">Annular Reynolds number uses the API factor 757. The course notes omit this factor and give a slightly higher value.</p>')}
+function ecdProfile(h){const pts=[],ds=[...new Set(h.G.ann.map(s=>s.b))];ds.forEach(z=>{const ab=sum(h.G.ann.filter(s=>s.b<=z+0.01),s=>s.dP);pts.push([toD('mw',P.mw+ab/(0.052*tvdOf(z))),toD('len',z)])});return pts}
+function tEcd(){const h=hyd(Qf()),cl=clean(h),e=ecdCalc(h,cl);
+ const body=kpi([['ECD at Bottom',fv(e.bot,'mw',3)],['ECD with Cuttings',fv(e.cut,'mw',3)],['ECD at Shoe',fv(e.sh,'mw',3)],['Circulating BHP',fv(e.bhpC,'press',0)]])+
+ cd('Pressure & ECD|فشار و ECD',tb([['MW','وزن گل',P.mw,'mw',3],['ECD at Bottom','چگالی معادل گردش در ته چاه',e.bot,'mw',3],['ECD with Cuttings Load','ECD با بار کنده',e.cut,'mw',3],['Cuttings Concentration','غلظت کنده',pc(e.C*100)],['ECD at Shoe','ECD در شو',e.sh,'mw',3],['ESD (static, no T/P correction)','چگالی معادل استاتیک',P.mw,'mw',3],
+  ['Static BHP','فشار ته چاه استاتیک',e.bhpS,'press',0],['Circulating BHP','فشار ته چاه حین گردش',e.bhpC,'press',0],['Pore Pressure','فشار منفذی',P.pore,'mw',2],['Fracture Pressure','فشار شکست',P.frac,'mw',2],['ECD Margin to Fracture','فاصله ECD تا شکست',P.frac-e.bot,'mw',3],['MW Margin to Pore','فاصله MW تا منفذی',P.mw-P.pore,'mw',3]]))+
+ cd('Alerts|هشدارها',alertsOf(h,cl,e))+'<canvas id="c1"></canvas>';
+ const v=(x,a,b)=>[[toD('mw',x),a],[toD('mw',x),b]],d0=0,d1=toD('len',P.md);
+ _chart=[['c1',{xl:'ECD ('+ul('mw')+')',yl:'Depth ('+ul('len')+')',yrev:1,series:[{n:'ECD',pts:ecdProfile(h).concat([[toD('mw',e.bot),d1]]),mk:1},{n:'MW',pts:v(P.mw,d0,d1),dash:1},{n:'Pore',pts:v(P.pore,d0,d1),dash:1},{n:'Fracture',pts:v(P.frac,d0,d1),dash:1}]}]];return body}
+function optim(h){const Q=h.Q,Pmax=P.maxSPP,par=q=>{const x=hyd(q);return x.sur+x.sPipe+x.sAnn},P1=par(Q),P2=par(Q*0.6),m=lg(P1/P2)/lg(1/0.6),rho=P.mw,nn=Math.max(h.nz.length,1);
+ const cl=clean(h),w=avMinSeg(cl),Qmin=w?P.avMin*w.A/24.5:NaN,lim=isFinite(P.pumpHP)?1714*P.pumpHP*0.9/Pmax:Infinity;
+ const mk=(name,dPopt)=>{const Pp=Pmax-dPopt;let Qo=Q*Math.pow(Pp/P1,1/m),note='';if(Qo>lim){Qo=lim;note='limited by pump power'}if(Qo<Qmin){Qo=Qmin;note='limited by minimum AV'}
+  const Pc=P1*Math.pow(Qo/Q,m),dPb=Pmax-Pc;if(!(dPb>0))return{name,bad:1};const tfa=Math.sqrt(rho*Qo*Qo/(10858*dPb)),hh=dPb*Qo/1714;
+  return{name,Qo,dPb,tfa,nz:32*Math.sqrt(4*tfa/(Math.PI*nn)),hhp:hh,hsi:hh/(Math.PI/4*P.holeD**2),IF:0.01732*Qo*Math.sqrt(rho*dPb),jet:0.32086*Qo/tfa,note}};
+ return{m,P1,Pmax,Qmin,A:mk('Max HHP',Pmax/(m+1)),B:mk('Max Impact Force',2*Pmax/(m+2)),par}}
+function tBit(){const h=hyd(Qf()),o=optim(h);
+ const cell=r=>r.bad?['Invalid','—','—','—','—','—','—','—','—']:[fv(r.Qo,'flow',0),fv(r.dPb,'press',0),n2(r.tfa,3)+' in²',n2(r.nz,1)+'/32',n2(r.hhp,1)+' hp',n2(r.hsi,2),fv(r.IF,'force',0),n2(r.jet,0)+' ft/s',r.note||'—'];
+ const body=cd('Current Bit Hydraulics|هیدرولیک بیت فعلی',tb([['TFA','سطح کل جریان',isFinite(h.tfa)?n2(h.tfa,4)+' in²':'—'],['Bit Pressure Loss','افت فشار بیت',h.dPb,'press',0],['Share of SPP','سهم از SPP',pc(h.dPb/h.SPP*100)],['Bit HHP','توان هیدرولیکی بیت',isFinite(h.hhpb)?n2(h.hhpb,1)+' hp':'—'],['HSI','توان هیدرولیکی بر اینچ مربع',isFinite(h.hsi)?n2(h.hsi,2)+' hp/in²':'—'],['Impact Force','نیروی ضربه',h.IF,'force',0],['Jet Velocity','سرعت جت',isFinite(h.jet)?n2(h.jet,0)+' ft/s':'—']]))+
+ cd('Optimization|بهینه‌سازی',gd(['Method|روش','Optimum Flow|دبی بهینه','Bit ΔP|افت بیت','TFA|TFA','Nozzle Size (equal)|اندازه نازل','Bit HHP|HHP','HSI|HSI','Impact|ضربه','Jet|جت','Note|توضیح'],[[o.A.name,...cell(o.A)],[o.B.name,...cell(o.B)]])+`<p class="note">Parasitic loss exponent m = ${n2(o.m,3)}. Minimum flow for acceptable AV: ${fv(o.Qmin,'flow',0)}. Nozzle size is for ${Math.max(h.nz.length,1)} equal nozzles.</p><canvas id="c2"></canvas>`);
+ const qs=[];for(let i=0;i<=24;i++)qs.push(h.Q*(0.4+i*0.06));const cx=q=>toD('flow',q),cp=p=>toD('press',p);
+ _chart=[['c2',{xlog:1,ylog:1,xl:'Flow ('+ul('flow')+')',yl:'Pressure ('+ul('press')+')',series:[{n:'Parasitic',pts:qs.map(q=>[cx(q),cp(o.par(q))])},{n:'Bit (current nozzles)',pts:qs.map(q=>[cx(q),cp(P.mw*q*q/(10858*h.tfa**2))])},{n:'Max SPP',pts:[[cx(qs[0]),cp(o.Pmax)],[cx(qs[24]),cp(o.Pmax)]],dash:1},{n:'Max HHP bit ΔP',pts:[[cx(qs[0]),cp(o.Pmax/(o.m+1))],[cx(qs[24]),cp(o.Pmax/(o.m+1))]],dash:1},{n:'Max IF bit ΔP',pts:[[cx(qs[0]),cp(2*o.Pmax/(o.m+2))],[cx(qs[24]),cp(2*o.Pmax/(o.m+2))]],dash:1}]}]];return body}
+function tClean(){const h=hyd(Qf()),cl=clean(h),e=ecdCalc(h,cl),w=avMinSeg(cl),rt=c=>!isFinite(c)?'—':c>=1?'Good':c>=0.5?'Fair':'Poor';
+ let o=cd('Slip Velocity & Transport|سرعت سقوط و انتقال کنده',gd(['Zone|ناحیه','Pipe|لوله','AV|سرعت حلقوی','Vs Method 1|سرعت سقوط روش ۱','Vs Method 2|سرعت سقوط روش ۲','Net Rise Vel.|سرعت خالص صعود','Transport Ratio|نسبت انتقال','CCI|شاخص CCI','Rating|ارزیابی'],cl.map(s=>[s.z,s.sn,fv(s.AV,'vel',1),fv(s.v1,'vel',1),fv(s.v2,'vel',1),fv(s.net1,'vel',1),pc(s.Tr*100)+(s.Tr>0.75?' ✓':''),n2(s.CCI,2),rt(s.CCI)]))+'<p class="note">Method 1 = Moore (course notes, Power Law style). Method 2 = Bingham/Power Law viscosity method from the notes. Transport Ratio above 75 % indicates efficient cleaning. CCI = AV·MW·K/400000, with K in eq. cP.</p>');
+ const ph=P.incl*Math.PI/180,Fmw=2.117-0.1648*P.mw+0.003681*P.mw**2,V1a=P.V1*Fmw,Vft=V1a*Math.cos(ph)+P.V2*Math.sin(ph);
+ o+=cd('Full Transport in Inclined Hole (Hopkins)|انتقال کامل در چاه انحرافی',tb([['Inclination','زاویه',n2(P.incl,1)+' °'],['Mud Weight Factor','ضریب وزن گل',n2(Fmw,3)],['Corrected V1','V1 تصحیح‌شده',V1a,'vel',1],['V2 (input)','V2 ورودی',P.V2,'vel',1],['AV for Full Transport','AV لازم برای انتقال کامل',Vft,'vel',1],['Flow Required','دبی لازم',w?Vft*w.A/24.5:NaN,'flow',0],['Current AV (critical section)','AV فعلی',w?w.AV:NaN,'vel',1]])+'<p class="note">Vft = V1·cosφ + V2·sinφ. V1 comes from the Hopkins chart; V2 from the horizontal critical velocity equation in the notes. Both are entered by the user.</p>');
+ return o+cd('Cuttings Concentration|غلظت کنده',tb([['No-slip Concentration','غلظت بدون لغزش',pc(e.c0*100)],['Annulus Concentration','غلظت در حلقوی',pc(e.C*100)],['ECD Added by Cuttings','ECD افزوده توسط کنده',e.cut-e.bot,'mw',3]]))}
+function tTime(){const h=hyd(Qf()),G=h.G,out=po(),Q=Qf(),sv=sum(G.str,s=>capI(s.id)*(s.b-s.a)),av=sum(G.ann,s=>capA(s.D,s.od)*s.L),avB=sum(G.ann.filter(s=>s.z==='OH'),s=>capA(s.D,s.od)*s.L),qm=Q/42,T=v=>n2(v/qm,1)+' min',St=v=>n2(v/out,0)+' stk',lag=av/qm+P.lagExtra;
+ return cd('Times & Strokes|زمان‌ها و استروک‌ها',gd(['Step|مرحله','Volume|حجم','Strokes|استروک','Time|زمان'],[['Surface to Bit|سطح تا بیت',fv(sv,'vol',1),St(sv),T(sv)],['Bit to Shoe',fv(avB,'vol',1),St(avB),T(avB)],['Bottoms-up (Lag)',fv(av,'vol',1),St(av),T(av)],['Full Circulation',fv(sv+av,'vol',1),St(sv+av),T(sv+av)]]))+
+ cd('Lag Time & Sample Depth|زمان تأخیر و عمق نمونه',tb([['Lag Time (annulus + extra delay)','زمان تأخیر',n2(lag,1)+' min'],['Lag Strokes','استروک تأخیر',n2(av/out,0)+' stk'],['Depth Drilled During Lag','عمق حفاری‌شده در طول تأخیر',P.rop*lag/60,'len',1],['Depth of Sample Arriving Now','عمق نمونه‌ی در حال رسیدن',P.md-P.rop*lag/60,'len',1]])+'<p class="note">Assumes constant pump rate and uniform ROP. Enter sample-line and gas-trap delay in the optional field.</p>')}
+function surgeAt(Vp){const r=rheo(),rho=P.mw,G=geo();let tot=0,sh=0;
+ const rows=G.ann.map(s=>{const A=s.D**2-s.od**2,gap=s.D-s.od,v=(0.45+s.od**2/A)*Vp,Vm=1.5*v,g=2.4*Vm/gap*(2*r.n+1)/(3*r.n),pl=r.Kt*Math.pow(g,r.n)*s.L/(300*gap),Q=Vm*A/24.5,pt=0.000077*rho**0.8*Q**1.8*Math.max(r.PV,0.5)**0.2*s.L/(gap**3*(s.D+s.od)**1.8),p=Math.max(pl,pt);tot+=p;if(s.b<=G.shoe+0.01)sh+=p;return{...s,Vm,pl,pt,p}});return{tot,sh,rows}}
+function tSurge(){const Vp=P.standL/(P.standT/60),sg=surgeAt(Vp),tvd=P.tvd,eSu=P.mw+sg.tot/(0.052*tvd),eSw=P.mw-sg.tot/(0.052*tvd),eSh=P.mw+sg.sh/(0.052*tvdOf(P.shoe));
+ const lim=Pa=>{if(!(Pa>0))return 0;let a=0,b=3000;if(surgeAt(b).tot<Pa)return b;for(let i=0;i<50;i++){const m=(a+b)/2;if(surgeAt(m).tot>Pa)b=m;else a=m}return a};
+ const vSw=lim((P.mw-P.pore-P.tmg)*0.052*tvd),vSu=lim((P.frac-P.mw-P.tmg)*0.052*tvd),vMax=Math.min(vSw,vSu);
+ let a2='';if(eSw<P.pore)a2+=al('bad','Swab ECD falls below pore pressure: kick risk.');if(eSu>P.frac)a2+=al('bad','Surge ECD exceeds fracture pressure.');if(!a2&&isFinite(eSw+eSu))a2=al('ok','Swab and surge stay between pore and fracture pressure at the entered speed.');
+ return cd('Surge / Swab (closed pipe, Burkhardt & Moore)|فشار Surge و Swab',tb([['Average Pipe Speed','سرعت متوسط لوله',Vp,'vel',1],['Bottom-hole Pressure Change','تغییر فشار ته چاه',sg.tot,'press',0],['Surge ECD','ECD در Surge',eSu,'mw',3],['Swab ECD','ECD در Swab',eSw,'mw',3],['Shoe ECD (Surge)','ECD در شو',eSh,'mw',3],['Max Speed (Swab limit)','حداکثر سرعت مجاز Swab',vSw,'vel',1],['Max Speed (Surge limit)','حداکثر سرعت مجاز Surge',vSu,'vel',1],['Max Tripping Speed','حداکثر سرعت لوله‌کشی',vMax,'vel',1],['Minimum Time per Stand','حداقل زمان هر استند',n2(P.standL/vMax*60,0)+' s']])+a2)+
+ cd('Details by Section|جزئیات',gd(['Zone|ناحیه','Pipe|لوله','Eff. Speed|سرعت مؤثر','Laminar|آرام','Turbulent|آشفته','Used|انتخاب‌شده'],sg.rows.map(s=>[s.z,s.sn,fv(s.Vm,'vel',0),fv(s.pl,'press',1),fv(s.pt,'press',1),fv(s.p,'press',1)]))+'<p class="note">The larger of laminar and turbulent results is used. Effective speed = 1.5 × (0.45 + d²/(D²−d²)) × pipe speed. Open-ended pipe is not modelled.</p>')}
+function tPooh(){const cc=capI(P.csgID),dp=(P.dpOD**2-P.dpID**2)/1029.4,cp=capI(P.dpID),L=P.avgStd,N=P.nStands,mw=P.mw,bd=N*L*dp,bw=N*L*(dp+cp);
+ return cd('Hydrostatic Loss while Pulling Out|افت هیدرواستاتیک هنگام بیرون‌کشیدن',tb([['Casing Capacity','ظرفیت کیسینگ',cc,'cap',5],['Pipe Displacement','جابجایی لوله',dp,'cap',5],['Pipe Capacity','ظرفیت لوله',cp,'cap',5],
+  ['#','Dry Pipe','لوله‌ی خشک'],['Volume Displaced','حجم جابجا‌شده',bd,'vol',2],['HP Decrease','افت HP',bd/(cc-dp)*0.052*mw,'press',1],['Dry Pipe Length to Lose Overbalance','طول لوله‌ی خشک تا از دست رفتن overbalance',P.ob*(cc-dp)/(mw*0.052*dp),'len',0],
+  ['#','Wet Pipe','لوله‌ی مرطوب'],['Volume Displaced','حجم جابجا‌شده',bw,'vol',2],['HP Decrease','افت HP',bw/(cc-dp-cp)*0.052*mw,'press',1],['Wet Pipe Length to Lose Overbalance','طول لوله‌ی مرطوب تا از دست رفتن overbalance',P.ob*(cc-cp-dp)/(mw*0.052*(cp+dp)),'len',0],
+  ['#','Fill-up','پر کردن چاه'],['Fill per Stand (dry)','حجم پرکردن هر استند خشک',L*dp,'vol',3],['Fill per Stand (wet)','حجم پرکردن هر استند مرطوب',L*(dp+cp),'vol',3]])+'<p class="note">Formulas from the course notes; only drill pipe displacement/capacity is used, with casing as the outer boundary.</p>')}
+/* ---------- kill sheet ---------- */
+function killCalc(){const G=geo(),out=po(),tvd=P.tvd,rho=P.mw,KMW=P.sidpp/(0.052*tvd)+rho+P.kMargin,ICP=P.sidpp+P.scrP+P.pMargin,FCP=P.scrP*KMW/rho;
+ const sv=sum(G.str,s=>capI(s.id)*(s.b-s.a)),av=sum(G.ann,s=>capA(s.D,s.od)*s.L),avB=sum(G.ann.filter(s=>s.z==='OH'),s=>capA(s.D,s.od)*s.L);
+ let rem=P.gain,hk=0;for(const s of [...G.ann].reverse()){const c=capA(s.D,s.od),v=c*s.L;if(rem<=v){hk+=rem/c;rem=0;break}hk+=s.L;rem-=v}
+ const MG=0.052*rho,IG=hk>0?MG-(P.sicp-P.sidpp)/hk:NaN,type=!isFinite(IG)?'—':IG<0.15?'Gas':IG<0.4?'Oil / Gas-Oil':'Water / Brine';
+ const Vt=sv+av+P.pitV,w=8.33*P.bSG,lbs=KMW<w?42*(KMW-rho)/(1-KMW/w)*Vt:NaN;
+ return{G,out,KMW,ICP,FCP,sv,av,avB,hk,MG,IG,type,maasp0:(P.frac-rho)*0.052*tvdOf(G.shoe),maaspK:(P.frac-KMW)*0.052*tvdOf(G.shoe),Vt,lbs,volInc:lbs/(350*P.bSG)}}
+function tKill(){const k=killCalc(),sB=k.sv/k.out,sA=k.av/k.out,qk=k.out*P.scrSpm*42,tm=s=>n2(s/P.scrSpm,1)+' min';
+ let a='';if(P.sicp>=k.maasp0)a+=al('bad','SICP exceeds MAASP: risk of fracturing at the shoe.');if(k.KMW>=P.frac-0.3)a+=al('bad','KMW is at or above the fracture pressure margin.');if(k.ICP>P.maxSPP)a+=al('bad','ICP exceeds the maximum pump pressure.');
+ if(k.type!=='—')a+=al(k.type==='Gas'?'warn':'info','Influx type (gradient '+n2(k.IG,3)+' psi/ft): '+k.type);
+ const sch=[];for(let i=0;i<=10;i++){const stk=sB*i/10;sch.push([n2(stk,0),n2(stk/P.scrSpm,1),fv(k.ICP+(k.FCP-k.ICP)*i/10,'press',0)])}
+ _chart=[['c3',{xl:'Strokes',yl:'DP pressure ('+ul('press')+')',series:[{n:'Wait & Weight',pts:sch.map((r,i)=>[sB*i/10,toD('press',k.ICP+(k.FCP-k.ICP)*i/10)]),mk:1}]}]];
+ return kpi([['KMW',fv(k.KMW,'mw',3)],['ICP',fv(k.ICP,'press',0)],['FCP',fv(k.FCP,'press',0)],['MAASP',fv(k.maasp0,'press',0)]])+cd('Alerts & Analysis|هشدارها',a||al('info','Enter SIDPP, SICP and pit gain for the full analysis.'))+
+ cd('Kill Sheet|برگه‌ی کشتن چاه',tb([['#','Mud Weight & Pressures','وزن گل و فشارها'],['Original MW','وزن گل اولیه',P.mw,'mw',3],['SIDPP','فشار شات‌این لوله',P.sidpp,'press',0],['SICP','فشار شات‌این کیسینگ',P.sicp,'press',0],['KMW = SIDPP/(0.052·TVD) + MW','وزن گل کشتن',k.KMW,'mw',3],['ICP = SIDPP + SCR','فشار اولیه گردش',k.ICP,'press',0],['FCP = SCR × KMW / MW','فشار نهایی گردش',k.FCP,'press',0],
+ ['#','Kick','کیک'],['Kick Height in Annulus','ارتفاع کیک',k.hk,'len',1],['Influx Gradient','گرادیان سیال ورودی',n2(k.IG,3)+' psi/ft'],['Influx Type','نوع سیال ورودی',k.type],
+ ['#','MAASP','حداکثر فشار مجاز حلقوی'],['MAASP with Original MW','MAASP با گل اولیه',k.maasp0,'press',0],['MAASP with KMW','MAASP با گل کشتن',k.maaspK,'press',0],
+ ['#','Volumes & Strokes','حجم و استروک'],['String Volume','حجم رشته',k.sv,'vol',1],['Annulus Volume','حجم حلقوی',k.av,'vol',1],['Pump Output','خروجی پمپ',k.out,'vol',4],['Kill Rate','دبی کشتن',qk,'flow',0],
+ ['Surface to Bit','سطح تا بیت',n2(sB,0)+' stk — '+tm(sB)],['Bit to Shoe','بیت تا شو',n2(k.avB/k.out,0)+' stk — '+tm(k.avB/k.out)],['Bit to Surface','بیت تا سطح',n2(sA,0)+' stk — '+tm(sA)],['Total Circulation','کل گردش',n2(sB+sA,0)+' stk — '+tm(sB+sA)],
+ ['#','Weighting Material','ماده‌ی وزن‌دهنده'],['Total System Volume','حجم کل سیستم',k.Vt,'vol',0],['Weighting Material Required','مقدار ماده‌ی لازم',k.lbs,'mass',0],['25 kg Sacks','کیسه‌ی ۲۵ کیلوگرمی',n2(k.lbs*0.453592/25,0)],['Volume Increase','افزایش حجم',k.volInc,'vol',1]]))+
+ cd('DP Pressure Schedule – Wait & Weight|جدول فشار',gd(['Strokes|استروک','Time min|زمان','DP Pressure|فشار لوله'],sch)+'<canvas id="c3"></canvas>')+
+ cd("Driller's Method|روش دریلر",tb([['First Circulation','گردش اول','Hold DP pressure = '+fv(k.ICP,'press',0)],['First Circulation Strokes','استروک گردش اول',n2(sA,0)+' stk — '+tm(sA)],['Second Circulation','گردش دوم','Pump KMW: DP from ICP to FCP per schedule, then constant']])+'<p class="note">In the first circulation casing pressure rises as gas expands; adjust the choke to hold DP pressure. In the second circulation hold casing pressure until KMW reaches the bit.</p>')}
+function tSide(){const MG=0.052*P.mw,cap=capA(P.csgID,P.dpOD),hpb=MG/cap,vc=P.vRange/hpb,rows=[];for(let i=1;i<=8;i++)rows.push([i,fv(P.sicp+P.vMargin+P.vRange*i,'press',0),fv(vc*i,'vol',1)]);
+ let p1=P.lub1;const d=P.lub2-P.lub1,lr=[];for(let i=1;i<=5;i++){const p2=p1+d,p3=p1*p1/p2;lr.push([i,fv(p1,'press',0),fv(p2,'press',0),fv(p3,'press',0)]);p1=p3}
+ const bt=P.buD*P.buCap,ps=P.buFr*P.buD*0.052-P.buGG*P.buD,pe=(P.buFr-P.buFl)*P.buD*0.052,bs=[];for(let i=0;i<=5;i++)bs.push([fv(bt*i/5,'vol',0),fv(Math.min(P.buBurst,ps+(pe-ps)*i/5),'press',0)]);
+ return cd('Volumetric Method|روش حجمی',tb([['Mud Gradient','گرادیان گل',MG,'pg',4],['Upper Annulus Capacity (casing × DP)','ظرفیت حلقوی بالایی',cap,'cap',5],['HP per bbl','فشار هیدرواستاتیک به ازای هر بشکه',n2(toD('press',hpb)/toD('vol',1),2)+' '+ul('press')+'/'+ul('vol')],['Volume to Bleed per Cycle','حجم تخلیه در هر چرخه',vc,'vol',2]])+gd(['Cycle|چرخه','Casing Pressure|فشار کیسینگ','Cumulative Bled|حجم تجمعی'],rows))+
+ cd('Gas Migration Rate|نرخ مهاجرت گاز',tb([['Migration Rate','نرخ مهاجرت',P.migDP/(MG*P.migT),'rop',1]]))+
+ cd('Lubricate & Bleed|روش لوبریکیت و بلید','<p class="note">P3 = P1² / P2</p>'+gd(['Cycle|چرخه','P1|P1','P2|P2','P3 (bleed to)|فشار تخلیه'],lr))+
+ cd('Bullheading|بول‌هدینگ',tb([['Internal Volume','حجم داخلی',bt,'vol',0],['Max Surface Pressure at Start','حداکثر فشار سطح در شروع',ps,'press',0],['Max Surface Pressure at End','حداکثر فشار سطح در پایان',pe,'press',0],['Shut-in Tubing Pressure','فشار شات‌این',P.buSIT,'press',0],['Burst Pressure','فشار ترکیدن',P.buBurst,'press',0]])+(ps>P.buBurst?al('warn','Start pressure exceeds burst pressure; the burst limit is applied in the schedule.'):'')+gd(['Volume Pumped|حجم پمپ‌شده','Max Surface Pressure|حداکثر فشار سطح'],bs))}
+/* ---------- d-exponent ---------- */
+const dxK={z:'len',rop:'rop',wob:'wob',rpm:null,mw:'mw',ecd:'mw'};
+function dxCalc(){const D=P.holeD,rows=S.dx.map(r=>({...r}));
+ rows.forEach(r=>{const mwr=r.ecd>0?r.ecd:r.mw;r.ok=[r.z,r.rop,r.wob,r.rpm,mwr].every(x=>isFinite(x)&&x>0);if(r.ok){r.d=lg(r.rop/(60*r.rpm))/lg(12*r.wob*1000/(1e6*D));r.dxc=r.d*P.dxN/mwr}});
+ const ok=rows.filter(r=>r.ok).sort((x,y)=>x.z-y.z),tp=ok.filter(r=>r.use&&r.dxc>0);let a=NaN,b=NaN;
+ if(tp.length>=2){const n=tp.length,sx=sum(tp,r=>r.z),sy=sum(tp,r=>Math.log(r.dxc)),sxx=sum(tp,r=>r.z*r.z),sxy=sum(tp,r=>r.z*Math.log(r.dxc)),dn=n*sxx-sx*sx;if(Math.abs(dn)>1e-9){b=(n*sxy-sx*sy)/dn;a=(sy-b*sx)/n}}
+ const Gn=0.052*P.dxN,Gob=P.obg;let run=0;
+ ok.forEach(r=>{if(!isFinite(a)){return}r.tr=Math.exp(a+b*r.z);r.ratio=r.dxc/r.tr;const Gp=Gob-(Gob-Gn)*Math.pow(r.ratio,1.2);r.pp=Gp/0.052;r.gp=Gp;r.fg=(P.nu/(1-P.nu)*(Gob-Gp)+Gp)/0.052;if(!r.use&&r.ratio<P.dxThr)run++;else run=0;r.run=run});
+ return{ok,a,b}}
+function dxUpd(){const el=$('#dxres');if(!el)return;rebuild();const m=miss(['holeD','dxN','obg','nu','dxThr']);if(m.length){el.innerHTML=lockPanel(m);return}
+ const{ok,a,b}=dxCalc();let h=isFinite(a)?al('info','Normal trend: dxc = '+n2(Math.exp(a),4)+' · exp('+n2(b*1000,5)+'e-3 × depth[ft])'):al('warn','Select at least two "Trend" points at different depths to build the normal trend.');
+ if(ok.some(r=>r.run>=3))h+=al('bad','Transition Zone: dxc is below '+n2(P.dxThr*100,0)+' % of the normal trend in 3 or more consecutive points. Pore pressure increase is likely.');else if(ok.some(r=>r.ratio&&r.ratio<P.dxThr))h+=al('warn','dxc deviates below the normal trend. Watch the next points.');
+ h+=gd(['Depth|عمق','d|d','dxc|dxc','Trend|روند','dxc/Trend|نسبت','Pore Pressure|فشار منفذی','Pore Gradient|گرادیان منفذی','Fracture|شکست','Status|وضعیت'],ok.map(r=>[fv(r.z,'len',0),n2(r.d,3),n2(r.dxc,3),r.tr?n2(r.tr,3):'—',r.ratio?n2(r.ratio,3):'—',r.pp?fv(r.pp,'mw',2):'—',r.gp?fv(r.gp,'pg',3):'—',r.fg?fv(r.fg,'mw',2):'—',r.run>=3?'Transition':r.use?'Trend':(r.ratio&&r.ratio<P.dxThr)?'Decrease':'—']))+'<canvas id="c4"></canvas><canvas id="c5"></canvas>';
+ el.innerHTML=cd('Results|نتایج',h);const zs=ok.map(r=>r.z),mn=Math.min(...zs),mx=Math.max(...zs);
+ plot('c4',{xl:'dxc',yl:'Depth ('+ul('len')+')',yrev:1,series:[{n:'dxc',pts:ok.map(r=>[r.dxc,toD('len',r.z)]),dots:1},isFinite(a)?{n:'Normal trend',pts:[mn,mx].map(z=>[Math.exp(a+b*z),toD('len',z)]),dash:1}:{n:'',pts:[]}]});
+ plot('c5',{xl:'Equivalent weight ('+ul('mw')+')',yl:'Depth ('+ul('len')+')',yrev:1,series:[{n:'Pore (Eaton)',pts:ok.filter(r=>r.pp).map(r=>[toD('mw',r.pp),toD('len',r.z)]),mk:1},{n:'Fracture (Eaton)',pts:ok.filter(r=>r.fg).map(r=>[toD('mw',r.fg),toD('len',r.z)]),mk:1},{n:'MW',pts:ok.map(r=>[toD('mw',r.mw),toD('len',r.z)]),dash:1}]})}
+function dxTable(){const t=$('#dxt');if(!t)return;const cell=(r,i,c)=>`<td><input type="number" step="any" data-r="${i}" data-c="${c}" value="${r[c]==null?'':+toD(dxK[c],r[c]).toPrecision(6)}"></td>`;
+ t.innerHTML='<tr><th>#</th><th>Depth ('+ul('len')+')</th><th>ROP ('+ul('rop')+')</th><th>WOB ('+ul('wob')+')</th><th>RPM</th><th>MW ('+ul('mw')+')</th><th>ECD ('+ul('mw')+') optional</th><th>Trend</th><th></th></tr>'+S.dx.map((r,i)=>`<tr><td>${i+1}</td>${['z','rop','wob','rpm','mw','ecd'].map(c=>cell(r,i,c)).join('')}<td><input type="checkbox" data-r="${i}" data-c="use" ${r.use?'checked':''}></td><td><button data-del="${i}">×</button></td></tr>`).join('')}
+function dxTab(root){root.innerHTML=grp('Parameters',['holeD','dxN','obg','nu','dxThr'])+cd('Data|داده‌ها',`<div class="row"><button id="dxa">+ Row</button><button id="dxx">Clear Rows</button></div><div class="sc"><table class="t" id="dxt"></table></div><p class="note">d = log(R/60N) / log(12W/10⁶D); dxc = d × (Normal MW / ECD or MW). Pore: Gp = Gob − (Gob − Gn)·(dxc/trend)^1.2 (Eaton). Fracture: Gf = ν/(1−ν)·(Gob−Gp) + Gp. Tick "Trend" for points that define the normal trend.</p>`)+'<div id="dxres"></div>';
+ dxTable();dxUpd();$('#dxa').onclick=()=>{S.dx.push({z:null,rop:null,wob:null,rpm:null,mw:null,ecd:null,use:false});save();dxTable()};$('#dxx').onclick=()=>{S.dx=[];save();dxTable();dxUpd()}}
+/* ---------- mud, tanks, mud logging ---------- */
+function tMudWt(){const w=8.33*P.bSG,x=42*(P.wuW2-P.wuW1)/(1-P.wuW2/w),vb=x*P.wuV/(350*P.bSG),lb=350*P.bSG*P.wuVf*(P.wuW2-P.wuW1)/(w-P.wuW1),Vb=lb/(350*P.bSG);
+ let o=cd('Weight-up|افزایش وزن گل',tb([['Weighting Material (known initial volume)','ماده‌ی وزن‌دهنده',x*P.wuV,'mass',0],['Per bbl of Mud','به ازای هر بشکه',x,'mass',1],['Volume Increase','افزایش حجم',vb,'vol',1],['Final Volume','حجم نهایی',P.wuV+vb,'vol',1],['#','Specified Final Volume','حجم نهایی مشخص'],['Weighting Material','ماده‌ی وزن‌دهنده',lb,'mass',0],['Initial Mud Needed','گل اولیه‌ی لازم',P.wuVf-Vb,'vol',1]]));
+ const dw=P.dlV1*(P.dlW1-P.dlW2)/(P.dlW2-P.dlWw),dd=P.dlV1*(P.dlW1-P.dlW2)/(P.dlW2-P.dlWd),v1w=P.dlVf*(P.dlW2-P.dlWw)/(P.dlW1-P.dlWw),v1d=P.dlVf*(P.dlW2-P.dlWd)/(P.dlW1-P.dlWd);
+ o+=cd('Dilution|رقیق‌سازی',tb([['Water Required','آب لازم',dw,'vol',1],['Diesel Required','گازوئیل لازم',dd,'vol',1],['#','Specified Final Volume','حجم نهایی مشخص'],['Mud + Water','گل + آب',n2(toD('vol',v1w),1)+' + '+n2(toD('vol',P.dlVf-v1w),1)+' '+ul('vol')],['Mud + Diesel','گل + گازوئیل',n2(toD('vol',v1d),1)+' + '+n2(toD('vol',P.dlVf-v1d),1)+' '+ul('vol')]]));
+ const Vf=P.mxV1+P.mxV2,Df=(P.mxV1*P.mxD1+P.mxV2*P.mxD2)/Vf,V2=P.mxVt*(P.mxDt-P.mxD1)/(P.mxD2-P.mxD1);
+ o+=cd('Mixing Muds|اختلاط گل‌ها',tb([['Mixed Weight (no volume limit)','وزن مخلوط',Df,'mw',3],['Mixed Volume','حجم مخلوط',Vf,'vol',1],['For Target: Mud 2 (heavier)','گل ۲ برای حجم هدف',V2,'vol',1],['For Target: Mud 1 (lighter)','گل ۱ برای حجم هدف',P.mxVt-V2,'vol',1]]));
+ const dpc=capI(P.dpID);let annFt=NaN;if(gok()){const G=geo(),d=G.ann.find(s=>s.sn==='DP'&&s.z==='OH')||G.ann.find(s=>s.sn==='DP');if(d)annFt=1/capA(d.D,d.od)}
+ const hp=P.slW*0.052*P.slDry,dg=(P.slWt-P.slW)*0.052,sl=hp/dg,sv=sl*dpc,len2=P.slVol/dpc;
+ return o+cd('Slug|سلاگ',tb([['Required Hydrostatic Pressure','فشار هیدرواستاتیک لازم',hp,'press',0],['Gradient Difference','اختلاف گرادیان',dg,'pg',4],['Slug Length in DP','طول سلاگ در لوله',sl,'len',0],['Slug Volume','حجم سلاگ',sv,'vol',1],['Pit Gain from U-tubing','افزایش حجم تانک',P.slDry*dpc,'vol',2],['Slug Height in Annulus (needs well data)','ارتفاع سلاگ در حلقوی',sv*annFt,'len',0],['HP Gained in Annulus','افزایش HP در حلقوی',sv*annFt*dg,'press',1],['#','Slug Weight for a Given Volume','وزن سلاگ برای حجم مشخص'],['Slug Length','طول سلاگ',len2,'len',0],['Slug Weight','وزن سلاگ',hp/0.052/len2+P.slW,'mw',3]]))}
+function tTank(){let V,Vl;const t=P.tkType;
+ if(t==='rect'){V=P.tkL*P.tkW*P.tkH;Vl=P.tkL*P.tkW*P.tkM}else if(t==='vcyl'){V=Math.PI/4*P.tkD**2*P.tkH;Vl=Math.PI/4*P.tkD**2*P.tkM}
+ else{const r=P.tkD/2,hh=Math.min(Math.max(P.tkM,0),P.tkD);V=Math.PI*r*r*P.tkL;Vl=P.tkL*(r*r*Math.acos((r-hh)/r)-(r-hh)*Math.sqrt(Math.max(2*r*hh-hh*hh,0)))}
+ const b=x=>x/5.61458;return tb([['Tank Capacity','حجم کل مخزن',b(V),'vol',2],['Fluid Volume','حجم سیال',b(Vl),'vol',2],['Fill Level','درصد پر بودن',pc(Vl/V*100)],['Tank Capacity (m³ / ft³)','حجم کل',n2(V*0.0283168,2)+' m³ / '+n2(V,1)+' ft³']])+'<p class="note">Enter dimensions in the current unit system. For horizontal cylinders the circular-segment formula is used and is valid above and below half full.</p>'}
+function tGas(){const c=[P.gC1,P.gC2,P.gC3,P.gC4,P.gC5],tot=sum(c,x=>x),wh=(tot-c[0])/tot*100,bh=(c[0]+c[1])/(c[2]+c[3]+c[4]),ch=(c[3]+c[4])/c[2];
+ const cat=!isFinite(wh)?'—':wh<0.5?'Dry gas, likely non-productive':wh<17.5?'Gas':wh<40?'Light oil or condensate':'Residual or heavy oil';
+ return cd('Gas Unit & Percent Conversion|تبدیل واحد گاز',tb([['% → ppm','درصد به ppm',n2(P.gPct*10000,0)+' ppm'],['% → Units','درصد به یونیت',n2(P.gPct*10000/P.gUnit,1)+' units'],['Units → ppm','یونیت به ppm',n2(P.gUin*P.gUnit,0)+' ppm'],['Units → %','یونیت به درصد',n2(P.gUin*P.gUnit/10000,3)+' %']])+'<p class="note">The Unit factor depends on detector type and unit calibration. Take it from the unit manual.</p>')+
+ cd('Haworth Ratios (C1–C5)|نسبت‌های هاورث',tb([['Wetness Wh = ΣC2–C5 / ΣC × 100','رطوبت گاز',n2(wh,2)+' %'],['Balance Bh = (C1+C2)/(C3+C4+C5)','تعادل',n2(bh,2)],['Character Ch = (C4+C5)/C3','کاراکتر',n2(ch,2)],['Wh Interpretation (guide)','تفسیر راهنما',cat],['C1/C2','C1/C2',n2(c[0]/c[1],1)],['C1/C3','C1/C3',n2(c[0]/c[2],1)],['C1/C4','C1/C4',n2(c[0]/c[3],1)],['C1/C5','C1/C5',n2(c[0]/c[4],1)]])+'<p class="note">Interpretation is a guide only. Confirm with lithology, logs and samples.</p>')}
+function tMse(){const D=P.holeD,T=P.trq*1000,W=P.wob*1000,a=4*W/(Math.PI*D*D),mse=480*T*P.rpm/(D*D*P.rop)+a;
+ return cd('Drilling Parameters Review|مرور پارامترهای حفاری',tb([['ROP','نرخ نفوذ',P.rop,'rop',2],['Time per Meter','زمان حفاری هر متر',n2(60/(P.rop*0.3048),1)+' min/m'],['WOB','وزن روی بیت',P.wob,'wob',1],['RPM','دور',n2(P.rpm,0)],['Torque','تورک',P.trq,'trq',1],['MSE (Teale)','انرژی مخصوص مکانیکی',n2(mse,0)+' psi'],['WOB Share of MSE','سهم WOB',pc(a/mse*100)],['Torque Share of MSE','سهم تورک',pc(100-a/mse*100)],['Instantaneous d-exponent','d-exponent لحظه‌ای',n2(lg(P.rop/(60*P.rpm))/lg(12*P.wob*1000/(1e6*D)),3)]])+'<p class="note">MSE = 480·T·N/(D²·ROP) + 4·WOB/(π·D²), T in ft·lbf, ROP in ft/h. A sudden MSE rise suggests inefficiency (balling, bit wear, vibration).</p>')}
+/* ---------- unit converter ---------- */
+const CV={'Pressure':{psi:1,bar:14.5038,kPa:0.145038,MPa:145.038,atm:14.6959,'kgf/cm²':14.2234},'Mud Weight / Density':{ppg:1,SG:8.3454,'lb/ft³':0.133681,'kg/m³':0.0083454,'kg/L':8.3454},'Pressure Gradient':{'psi/ft':1,'bar/m':4.42075,'kPa/m':0.0442075,ppg:0.052,SG:0.43353},'Length':{ft:1,m:3.28084,in:0.083333,mm:0.00328084,km:3280.84,mile:5280},'Volume':{bbl:1,'m³':6.28981,gal:0.0238095,L:0.00628981,'ft³':0.178108},'Flow Rate':{gpm:1,'L/min':0.264172,'bbl/min':42,'m³/h':4.40287},'Capacity':{'bbl/ft':1,'m³/m':1.91713,'L/m':0.00191713},'Temperature':null};
+function tConv(root){root.innerHTML=cd('Unit Converter|تبدیل واحد',`<div class="grid"><label>Group<select id="cvg">${Object.keys(CV).map(k=>`<option>${k}</option>`).join('')}</select></label><label>Value<input id="cvv" type="number" step="any"></label><label>From Unit<select id="cvu"></select></label></div><div id="cvo"></div>`);
+ const g=$('#cvg'),u=$('#cvu');const fillU=()=>{u.innerHTML=g.value==='Temperature'?['°C','°F','K','°R'].map(x=>`<option>${x}</option>`).join(''):Object.keys(CV[g.value]).map(x=>`<option>${x}</option>`).join('')};
+ const run=()=>{const v=parseFloat($('#cvv').value),o=$('#cvo');if(isNaN(v)){o.innerHTML='';return}
+  if(g.value==='Temperature'){const x=u.value,c=x==='°C'?v:x==='°F'?(v-32)*5/9:x==='K'?v-273.15:(v-491.67)*5/9;o.innerHTML=tb([['°C','',n2(c,2)],['°F','',n2(c*9/5+32,2)],['K','',n2(c+273.15,2)],['°R','',n2((c+273.15)*9/5,2)]]);return}
+  const m=CV[g.value],b=v*m[u.value];o.innerHTML=tb(Object.keys(m).map(k=>[k,'',n2(b/m[k],5)]))};
+ g.onchange=()=>{fillU();run()};u.onchange=run;$('#cvv').oninput=run;fillU()}
+/* ---------- dashboard, scenarios, help, settings ---------- */
+function dash(root){const k=keyRes(),x=k||{};root.innerHTML=cd((S.wellName||'Well')+' · '+(S.rigName||'Rig'),kpi([['Flow Rate',fv(x.Q,'flow',0)],['Calculated SPP',fv(x.SPP,'press',0)],['ECD at Bottom',fv(x.ECD,'mw',3)],['Bit HHP',isFinite(x.HHP)?n2(x.HHP,1)+' hp':'—'],['HSI',n2(x.HSI,2)],['CCI',n2(x.CCI,2)],['TFA',isFinite(x.TFA)?n2(x.TFA,3)+' in²':'—'],['Depth MD',fv(P.md,'len',0)]]))+
+ (k?cd('Automatic Alerts|هشدارها',alertsOf(k.h,k.cl,k.e)):al('info','Fill the Well Data inputs to unlock the dashboard values (well, string, pump, mud, nozzles, porosity and ROP).'))+cd('Quick Access','<div class="row">'+MODS.slice(1).map((m,i)=>`<button data-go="${i+1}">${m.t}</button>`).join('')+'</div>')}
+function scn(root){const draw=()=>{root.innerHTML=cd('Save Scenario',`<div class="row"><input id="scn" aria-label="Scenario name" style="max-width:260px"><button id="scs">Save Current State</button></div><p class="note">Type a scenario name, then save. Requires complete hydraulic inputs.</p>`)+
+ cd('Comparison',S.sc.length?gd(['Name','Flow','SPP','ECD','Bit HHP','HSI','CCI','',''],S.sc.map((s,i)=>[s.n,fv(s.r.Q,'flow',0),fv(s.r.SPP,'press',0),fv(s.r.ECD,'mw',3),n2(s.r.HHP,1),n2(s.r.HSI,2),n2(s.r.CCI,2),`<button data-ld="${i}">Load</button>`,`<button data-rm="${i}">Delete</button>`])):'<p class="note">No scenarios saved yet.</p>');
+ $('#scs').onclick=()=>{rebuild();const r=keyRes();if(!r){alert('Complete the hydraulic inputs first.');return}const n=$('#scn').value||('Scenario '+(S.sc.length+1)),snap={...S};delete snap.sc;delete snap.tpl;S.sc.push({n,snap,r:{Q:r.Q,SPP:r.SPP,ECD:r.ECD,HHP:r.HHP,HSI:r.HSI,CCI:r.CCI}});save();draw()};
+ root.querySelectorAll('[data-ld]').forEach(b=>b.onclick=()=>{const s=S.sc[+b.dataset.ld],keep={sc:S.sc,tpl:S.tpl};S=Object.assign({},s.snap,keep);save();draw()});
+ root.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{S.sc.splice(+b.dataset.rm,1);save();draw()})};draw()}
+function tests(){const T=[],t=(n,v,e,tol)=>T.push([n,v,e,Math.abs(v-e)<=tol]);
+ t('Hole capacity 12.25 in (bbl/ft)',capI(12.25),0.1457766,1e-4);t('Capacity (ft/bbl)',1/capI(12.25),6.8598,1e-3);t('Annulus 12.25 × 5 (bbl/ft)',capA(12.25,5),0.12149,1e-4);
+ t('Triplex 7×12 (bbl/stk)',0.000243*49*12,0.142884,1e-5);t('Duplex 5.5×14 rod 2 (bbl/stk)',0.000162*14*(2*5.5**2-4),0.128142,1e-5);
+ t('AV 530 gpm (ft/min)',24.5*530/(12.25**2-4.5**2),100,0.2);t('AV 12.6 bbl/min (ft/min)',12.6*1029.4/(12.25**2-4.5**2),99.92,0.05);
+ t('Slip velocity method 1 (ft/min)',slip1(13,11,0.25,22),41.085,0.1);t('Slip velocity method 2 (ft/min)',slip2(36,23,11,12.25,5,520,0.25,22),24.55,0.3);
+ t('Hydrostatic pressure (psi)',13.5*0.052*12000,8424,0.5);t('ECD (ppg)',200/0.052/10000+9.6,10,0.1);
+ const dp=0.0075,cc=0.0773;t('HP loss dry pipe (psi)',5*92*dp/(cc-dp)*0.052*11.5,29.56,0.1);t('HP loss wet pipe (psi)',5*92*(dp+0.01776)/(cc-dp-0.01776)*0.052*11.5,133.52,0.2);t('Dry pipe to lose overbalance (ft)',150*(cc-dp)/(11.5*0.052*dp),2334,2);
+ t('Slug volume (bbl)',12.2*0.052*184/((13.2-12.2)*0.052)*0.01422,32,0.2);t('Dilution with water (bbl)',100*(14-12)/(12-8.33),54.5,0.1);t('Mixing muds (ppg)',(400*11+400*14)/800,12.5,0.01);
+ t('MAASP (psi), notes value 2290, tol 10 psi',(0.8-0.52)*8200,2290,10);t('Bullhead start (psi)',13.8*10171*0.052-0.1*10171,6281,2);t('Bullhead end (psi)',(13.8-8.8)*10171*0.052,2644,1);
+ t('Volumetric HP per bbl',0.546/0.04425,12.34,0.01);t('Lubricate P3 (psi)',1000*1000/1100,909,0.5);t('Pressure to MW (ppg)',2600/0.052/5000,10,0.01);return T}
+function help(root){const T=tests();root.innerHTML=cd('Self-test against Course Notes',gd(['Test','Calculated','Notes value','Result'],T.map(r=>[r[0],n2(r[1],4),n2(r[2],4),r[3]?'<span class="pass">PASS</span>':'<span class="fail">FAIL</span>']))+'<p class="note">These examples come from the well control and drilling fluid calculation notes. Any FAIL must be reported before operational use.</p>')+
+ cd('Main Formulas',`<table class="t"><tr><th>Calculation</th><th>Relation</th><th>Source</th></tr>${[['Hydrostatic pressure','0.052·MW·TVD','Notes'],['Pipe capacity','ID²/1029.4 bbl/ft','Notes'],['Annular velocity','24.5·Q/(Dh²−Dp²) ft/min','Notes'],['Triplex output','0.000243·L²·S','Notes'],['KMW','SIDPP/(0.052·TVD)+MW','Notes'],['ICP, FCP','SIDPP+SCR; SCR·KMW/MW','Notes'],['Influx gradient','MG−(SICP−SIDPP)/h','Notes'],['MAASP','(Gfrac−Gmud)·Dshoe','Notes'],['Volumetric','HP/bbl = gradient/capacity','Notes'],['Lubricate & bleed','P3 = P1²/P2','Notes'],['Slip velocity','Moore; Bingham/Power Law','Notes'],['Pipe & annulus friction','Power Law (API RP 13D), Bingham comparison','Bourgoyne; Lapeyrouse'],['Surface equipment loss','E·ρ^0.8·Q^1.8·PV^0.2','Bourgoyne'],['Bit','ΔP=ρQ²/(10858·TFA²); HHP=ΔP·Q/1714','API'],['Optimization','Max HHP: ΔP=Pmax/(m+1); Max IF: 2Pmax/(m+2)','Bourgoyne'],['Surge/Swab','Burkhardt clinging 0.45; Moore ×1.5','Moore; Lapeyrouse'],['d-exponent','log(R/60N)/log(12W/10⁶D)','Jordan & Shirley'],['Pore / fracture','Eaton (exponent 1.2)','Eaton 1975'],['CCI','K·MW·AV/400000','Robinson/Larsen'],['Hopkins','Vft = V1·cosφ + V2·sinφ','Hopkins'],['MSE','Teale','SPE'],['Haworth','Wh, Bh, Ch','Haworth 1985']].map(r=>`<tr><td>${r[0]}</td><td class="v">${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</table>`)+
+ cd('Limitations','<p class="note">Herschel-Bulkley: parameters only. ESD temperature correction, open-ended pipe surge and full survey-based deviated geometry are not included; TVD is scaled linearly with MD. Notes print CCI with 40000, but the 0.5/1 criteria correspond to 400000, which is used here. This tool is not a basis for operational decisions.</p>')}
+function settings(root){const names=Object.keys(S.tpl);root.innerHTML=cd('Settings',`<div class="row"><button id="s1">Units: ${metric()?'Metric':'Field'}</button><button id="s2">Theme</button><button id="s3">Backup (JSON)</button><button id="s4">Reset Everything</button><button id="s6">Clear All Inputs</button></div><textarea id="imp" style="height:80px" aria-label="JSON"></textarea><button id="s5">Restore from JSON</button>`)+
+ cd('Well Templates',`<div class="row"><input id="tn" aria-label="Template name" style="max-width:240px"><button id="ts">Save as Template</button></div>`+(names.length?names.map(n=>`<div class="row"><b>${n}</b><button data-tl="${n}">Load</button><button data-td="${n}">Delete</button></div>`).join(''):'<p class="note">No templates saved.</p>'));
+ $('#s1').onclick=()=>$('#bU').click();$('#s2').onclick=()=>$('#bT').click();$('#s3').onclick=()=>{$('#imp').value=JSON.stringify(S)};
+ $('#s5').onclick=()=>{try{S=JSON.parse($('#imp').value);save();location.reload()}catch(e){alert('Invalid JSON')}};
+ $('#s4').onclick=()=>{if(confirm('Delete all data?')){localStorage.removeItem(KEY);location.reload()}};
+ $('#s6').onclick=()=>{if(confirm('Clear all input fields?')){Object.keys(IN).forEach(k=>delete S[k]);S.dx=[];save();render()}};
+ $('#ts').onclick=()=>{const n=$('#tn').value.trim();if(!n)return;const o={};Object.keys(IN).forEach(k=>{if(S[k]!=null)o[k]=S[k]});S.tpl[n]={v:o,dx:S.dx};save();settings(root)};
+ root.querySelectorAll('[data-tl]').forEach(b=>b.onclick=()=>{const t=S.tpl[b.dataset.tl];Object.keys(IN).forEach(k=>delete S[k]);Object.assign(S,t.v);S.dx=t.dx||[];save();alert('Template loaded')});
+ root.querySelectorAll('[data-td]').forEach(b=>b.onclick=()=>{delete S.tpl[b.dataset.td];save();settings(root)})}
+/* ---------- structure ---------- */
+const wellG=[['Well',['wellName','rigName','holeD','wash','md','tvd','csgID','shoe','riserL','riserID']],['Drill String',['dpOD','dpID','hwOD','hwID','hwL','dcOD','dcID','dcL']],['Pump',['ptype','liner','stroke','rod','eff','spm','qOver','maxSPP','pumpHP','surf','spMeas']],['Mud',['mw','r600','r300','r100','r6','r3','pitV']],['Bit & Formation',['nozz','pore','frac','rop','wob','rpm','trq']]];
+const MODS=[
+{id:'dash',t:'Dashboard',tabs:[{t:'Summary',custom:dash}]},
+{id:'well',t:'Well Data',tabs:[{t:'Well, String, Pump, Mud',inp:wellG,req:[],out:()=>cd('Summary',tb([['Pump Output','خروجی پمپ',po(),'vol',5],['Flow Rate','دبی',Qf(),'flow',1],['PV','ویسکوزیته پلاستیک',n2(rheo().PV,1)+' cP'],['YP','نقطه تسلیم',n2(rheo().YP,1)+' lb/100ft²']]))}]},
+{id:'hyd',t:'Hydraulics',tabs:[
+ {t:'Volumes',inp:[['String & Hole',['holeD','wash','md','tvd','csgID','shoe','riserL','riserID','dpOD','dpID','hwOD','hwID','hwL','dcOD','dcID','dcL','pitV','poro','rop','ptype','liner','stroke','rod','eff']]],req:()=>GEO,geo:1,out:tVol},
+ {t:'Pump',inp:[['Pump & Targets',['ptype','liner','stroke','rod','eff','spm','qOver','maxSPP','pumpHP','avDes','qTarget']]],req:PUMPK,out:tPump},
+ {t:'Velocities',inp:[['Flow & Bit',['spm','qOver','nozz']]],req:HY,geo:1,out:tVel},
+ {t:'Rheology',inp:[['Mud',['mw','r600','r300','r100','r6','r3']]],req:()=>['r600','r300','r100','r3'],out:tRheo},
+ {t:'Pressure Loss',inp:[['Conditions',['mw','spm','qOver','surf','spMeas','nozz']]],req:HY,geo:1,out:tPress},
+ {t:'ECD & BHP',inp:[['Conditions',['mw','spm','qOver','pore','frac','rop','cutRho','cutD','poro','avMin']]],req:HY,geo:1,out:tEcd,post:()=>charts(_chart)},
+ {t:'Bit & Optimization',inp:[['Bit & Pump',['nozz','spm','qOver','maxSPP','pumpHP','avMin']]],req:()=>[...HY(),'nozz','maxSPP'],geo:1,out:tBit,post:()=>charts(_chart)},
+ {t:'Hole Cleaning',inp:[['Cuttings & Hole',['cutD','cutRho','rop','poro','incl','V1','V2','avMin']]],req:HY,geo:1,out:tClean},
+ {t:'Time & Lag',inp:[['Conditions',['spm','qOver','rop','lagExtra']]],req:()=>[...HY(),...PUMPK()],geo:1,out:tTime},
+ {t:'Surge / Swab',inp:[['Tripping',['standL','standT','tmg','pore','frac']]],req:()=>[...GEO,'mw','r600','r300','standL','standT'],geo:1,out:tSurge},
+ {t:'POOH',inp:[['Stands',['nStands','avgStd','ob','mw','csgID','dpOD','dpID']]],req:()=>['csgID','dpOD','dpID','mw','nStands','avgStd'],out:tPooh}]},
+{id:'kill',t:'Kill Sheet',tabs:[
+ {t:'Kill Sheet',inp:[['Shut-in Data',['sidpp','sicp','gain','scrP','scrSpm','kMargin','pMargin','bSG','mw','tvd','pitV','frac','maxSPP']]],req:()=>[...GEO,...PUMPK(),'mw','sidpp','scrP','scrSpm'],geo:1,out:tKill,post:()=>charts(_chart)},
+ {t:'Side Methods',inp:[['Volumetric',['mw','sicp','vMargin','vRange','csgID','dpOD','migDP','migT']],['Lubricate & Bleed',['lub1','lub2']],['Bullheading',['buD','buFr','buCap','buBurst','buSIT','buGG','buFl']]],req:[],out:tSide}]},
+{id:'dx',t:'d-exponent',tabs:[{t:'d-exponent & Pore Pressure',custom:dxTab}]},
+{id:'mud',t:'Mud & Tanks',tabs:[
+ {t:'Weight, Dilution, Mixing, Slug',inp:[['Weight-up',['wuW1','wuW2','wuV','wuVf','bSG']],['Dilution',['dlW1','dlW2','dlV1','dlVf','dlWw','dlWd']],['Mixing',['mxV1','mxD1','mxV2','mxD2','mxVt','mxDt']],['Slug',['slW','slDry','slWt','slVol','dpID']]],req:[],out:tMudWt},
+ {t:'Tank Volumes',inp:[['Tank',['tkType','tkL','tkW','tkH','tkM','tkD']]],req:['tkType'],out:()=>cd('Tank Volume|حجم مخزن',tTank())}]},
+{id:'ml',t:'Mud Logging',tabs:[
+ {t:'Lag Time',inp:[['Conditions',['spm','qOver','rop','lagExtra']]],req:()=>[...HY(),...PUMPK()],geo:1,out:tTime},
+ {t:'Gas',inp:[['Gas',['gC1','gC2','gC3','gC4','gC5','gUnit','gPct','gUin']]],req:['gC1','gC2','gC3','gC4','gC5'],out:tGas},
+ {t:'Parameters & MSE',inp:[['Drilling',['rop','wob','rpm','trq','holeD']]],req:['rop','wob','rpm','trq','holeD'],out:tMse}]},
+{id:'cv',t:'Converter',tabs:[{t:'Unit Converter',custom:tConv}]},
+{id:'sc',t:'Scenarios',tabs:[{t:'Save & Compare',custom:scn}]},
+{id:'hp',t:'Help & Settings',tabs:[{t:'Self-test & Formulas',custom:help},{t:'Settings',custom:settings}]}];
+let cur={m:0,t:0};
+const lockPanel=m=>`<div class="al bad">OUTPUTS LOCKED — complete these inputs: ${m.map(k=>IN[k][0]).join(', ')}</div>`;
+const safe=fn=>{try{return fn()}catch(e){return al('bad','Calculation error: '+e.message)}};
+function render(){rebuild();
+ $('#mods').innerHTML=MODS.map((m,i)=>`<button data-m="${i}" class="${i===cur.m?'on':''}">${m.t}</button>`).join('');
+ const M=MODS[cur.m];$('#tabs').innerHTML=M.tabs.length>1?M.tabs.map((t,i)=>`<button data-t="${i}" class="${i===cur.t?'on':''}">${t.t}</button>`).join(''):'';$('#tabs').style.display=M.tabs.length>1?'flex':'none';
+ const T=M.tabs[cur.t],v=$('#view');
+ if(T.custom){v.innerHTML='';const box=document.createElement('div');v.appendChild(box);safe(()=>T.custom(box))}
+ else{v.innerHTML=T.inp.map(g=>grp(g[0],g[1])).join('')+'<div id="out"></div><div class="row"><button id="xc">Export CSV</button><button id="xp">Print / PDF</button><button id="xk">Copy Results</button><button id="xr">Clear This Tab\'s Inputs</button></div>';refresh();
+  $('#xc').onclick=exportCSV;$('#xp').onclick=()=>window.print();
+  $('#xk').onclick=()=>{const tx=$('#out').innerText;const fb=()=>{const a=document.createElement('textarea');a.value=tx;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove();alert('Copied')};navigator.clipboard?navigator.clipboard.writeText(tx).then(()=>alert('Copied')).catch(fb):fb()};
+  $('#xr').onclick=()=>{T.inp.forEach(g=>g[1].forEach(k=>delete S[k]));save();render()}}
+ $('#sub').textContent=(S.wellName||'')+' '+(S.rigName?'· '+S.rigName+' ':'')+'· '+(metric()?'Metric':'Field');$('#bU').textContent=metric()?'Metric':'Field'}
+function refresh(){rebuild();const T=MODS[cur.m].tabs[cur.t];if(T.custom)return;const o=$('#out');if(!o)return;
+ const m=miss(typeof T.req==='function'?T.req():(T.req||[]));if(m.length){o.innerHTML=lockPanel(m);return}
+ const errs=T.geo?validate():[];if(errs.length){o.innerHTML=errs.map(x=>al('bad',x)).join('')+al('bad','OUTPUTS LOCKED until the inputs above are corrected.');return}
+ o.innerHTML=safe(T.out);if(T.post)safe(T.post)}
+function exportCSV(){const rows=[];document.querySelectorAll('#out table').forEach(t=>{t.querySelectorAll('tr').forEach(r=>rows.push([...r.children].map(c=>'"'+c.innerText.replace(/"/g,'""').replace(/\n/g,' ').trim()+'"').join(',')));rows.push('')});
+ const fname='universal_hydraulic_'+MODS[cur.m].id+'.csv',txt='\ufeff'+rows.join('\n');
+ if(window.AndroidBridge){AndroidBridge.saveText(fname,txt);return}
+ const b=new Blob([txt],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fname;document.body.appendChild(a);a.click();a.remove()}
+document.addEventListener('input',e=>{const t=e.target;
+ if(t.dataset&&t.dataset.r!==undefined){const i=+t.dataset.r,c=t.dataset.c;if(c==='use')S.dx[i].use=t.checked;else{const v=parseFloat(t.value);S.dx[i][c]=isNaN(v)?null:toF(dxK[c],v)}save();dxUpd();return}
+ const k=t.dataset&&t.dataset.k;if(!k||!IN[k])return;const[,kd,fl]=IN[k];
+ if(fl==='sel'||fl==='txt'){if(t.value)S[k]=t.value;else delete S[k]}else{const v=parseFloat(t.value);if(isNaN(v))delete S[k];else S[k]=toF(kd,v)}
+ save();if(MODS[cur.m].tabs[cur.t].custom)dxUpd();else refresh()});
+document.addEventListener('click',e=>{const t=e.target;
+ if(t.dataset.m!==undefined){cur={m:+t.dataset.m,t:0};render()}else if(t.dataset.t!==undefined){cur.t=+t.dataset.t;render()}else if(t.dataset.go!==undefined){cur={m:+t.dataset.go,t:0};render()}
+ else if(t.dataset.del!==undefined){S.dx.splice(+t.dataset.del,1);save();dxTable();dxUpd()}});
+$('#bU').onclick=()=>{S._u=metric()?'F':'M';save();render()};
+$('#bT').onclick=()=>{S._th=S._th==='dark'?'light':'dark';document.documentElement.dataset.theme=S._th;save();refresh()};
+document.documentElement.dataset.theme=S._th;
+window.addEventListener('resize',()=>{const T=MODS[cur.m].tabs[cur.t];if(T.post)safe(T.post)});
+render();
+if('serviceWorker' in navigator&&location.protocol.startsWith('http')&&!window.AndroidBridge)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
